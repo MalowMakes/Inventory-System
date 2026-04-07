@@ -1,4 +1,4 @@
-package com.malow.inventory_system.model;
+package com.malow.inventory_system.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.malow.inventory_system.model.Equipment;
 import com.malow.inventory_system.repository.EquipmentRepository;
 //import org.springframework.web.bind.annotation.*; - Will need this later.
 
