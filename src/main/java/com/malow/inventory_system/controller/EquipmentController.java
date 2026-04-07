@@ -8,8 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.malow.inventory_system.model.Equipment;
-import com.malow.inventory_system.repository.EquipmentRepository;
-//import org.springframework.web.bind.annotation.*; - Will need this later.
+import com.malow.inventory_system.service.EquipmentService;
 
 import java.util.List;
 
@@ -18,15 +17,15 @@ import java.util.List;
 public class EquipmentController {
 
     @Autowired
-    private EquipmentRepository repository;
+    private EquipmentService service;
 
     @GetMapping // GET Requests
-    public List<Equipment> getAllEquipment() {
-        return repository.findAll(); // SQL -> Web
+    public List<Equipment> getAll() {
+        return service.getAll(); //Equipment
     }
 
     @PostMapping // POST requests
     public Equipment addEquipment(@RequestBody Equipment item) {
-        return repository.save(item); // Web -> SQL
+        return service.addEquipment(item);
     }
 }
