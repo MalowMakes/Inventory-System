@@ -32,6 +32,11 @@ public class EquipmentController {
         return service.getAll(); 
     }
 
+    @GetMapping("/search") // GET equipment by name search
+    public List<Equipment> search(@RequestParam String name) {
+        return service.searchEquipment(name);
+    }
+
     @GetMapping("/reservations") // GET all reservations
     public List<Reservation> getAllReservations() {
         return service.getAllReservations();

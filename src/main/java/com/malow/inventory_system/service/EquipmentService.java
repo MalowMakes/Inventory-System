@@ -25,6 +25,10 @@ public class EquipmentService {
         return repository.findAll();
     }
 
+    public List<Equipment> searchEquipment(String name) {
+        return repository.findByNameContainingIgnoreCase(name);
+    }
+
     public Equipment addEquipment(Equipment item) {
         // Validation Rule: Prevent negative prices
         if (item.getPricePerDay() < 0) {
