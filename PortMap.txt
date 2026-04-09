@@ -1,0 +1,5 @@
+Spring Boot (Port 8080).
+
+Docker Postgres Database (Port 5432).
+
+Running Vite/React (Port 5173).
