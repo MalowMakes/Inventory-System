@@ -32,7 +32,14 @@ public class EquipmentService {
         }
         return repository.save(item);
     }
-    
+
+    public void deleteEquipment(Long id) {
+        if (!repository.existsById(id)) {
+            throw new RuntimeException("Cannot delete item: Equipment with ID " + id + " does not exist.");
+        }
+        repository.deleteById(id);
+    }
+
     /** 
      * Reservation repository 
      * */
@@ -49,7 +56,8 @@ public class EquipmentService {
             .orElseThrow(() -> new RuntimeException("Equipment not found"));
 
         if (item.getQuantity() < 1) {
-            throw new RuntimeException("Item is out of stock! Check back later.");
+            LocalDate availableDate = reservationRepository.findLatestReturnDate(equipmentId);
+            throw new RuntimeException("Item out of stock! Expected available: " + availableDate);
         }
 
         // Reduce stock by 1
@@ -64,5 +72,12 @@ public class EquipmentService {
         res.setEndDate(LocalDate.now().plusDays(days));
 
         return reservationRepository.save(res);
+    }
+
+    public void deleteReservation(Long id) {
+        if (!reservationRepository.existsById(id)) {
+            throw new RuntimeException("Cannot delete item: Reservation with ID " + id + " does not exist.");
+        }
+        repository.deleteById(id);
     }
 }
