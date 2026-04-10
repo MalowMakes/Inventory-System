@@ -83,7 +83,7 @@ public class EquipmentController {
         return "Equipment " + id + " has been deleted successfully.";
     }
 
-    @DeleteMapping("/reservations") // Delete reservation by ID
+    @DeleteMapping("/reservations/{id}") // Delete reservation by ID
     public String deleteReservation(@PathVariable Long id) {
         service.deleteReservation(id);
         return "Reservation " + id + " has been deleted successfully.";

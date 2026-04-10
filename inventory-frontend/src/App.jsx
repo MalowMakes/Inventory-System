@@ -4,12 +4,14 @@ import Swal from 'sweetalert2';
 
 function App() {
   const [equipment, setEquipment] = useState([]);
-  const [formData, setFormData] = useState({ name: '', description: '', quantity: '', pricePerDay: '' });
-
-  const [editingId, setEditingId] = useState(null);
-  const [editFormData, setEditFormData] = useState({ name: '', description: '', quantity: '', pricePerDay: '' });
+  const [equipmentFormData, setEquipmentFormData] = useState({ name: '', description: '', quantity: '', pricePerDay: '' });
+  const [equipmentEditingId, setEquipmentEditingId] = useState(null);
+  const [equipmentEditFormData, setEquipmentEditFormData] = useState({ name: '', description: '', quantity: '', pricePerDay: '' });
 
   const [reservations, setReservations] = useState([]);
+  const [reservationFormData, setReservationFormData] = useState({ name: '', description: '', quantity: '', pricePerDay: '' });
+  const [reservationEditingId, setReservationEditingId] = useState(null);
+  const [reservationEditFormData, setReservationEditFormData] = useState({ name: '', description: '', quantity: '', pricePerDay: '' });
 
   // Fetch equipment data from Spring Boot
   const fetchEquipment = () => {
@@ -22,28 +24,28 @@ function App() {
   useEffect(() => { fetchEquipment(); }, []);
 
   // e - Handles the Form Submission
-  const handleSubmit = (e) => {
+  const handleEquipmentSubmit = (e) => {
     e.preventDefault();
-    axios.post('http://localhost:8080/api/equipment', formData)
+    axios.post('http://localhost:8080/api/equipment', equipmentFormData)
       .then(() => {
         fetchEquipment(); // Refresh the list after adding
-        setFormData({ name: '', description: '', quantity: '', pricePerDay: '' }); // Clear form
+        setEquipmentFormData({ name: '', description: '', quantity: '', pricePerDay: '' }); // Clear form
       })
       .catch(err => alert("Error adding item: " + err.response.data.message));
   };
 
   // id - Handles the Table Update
-  const handleUpdate = (id) => {
-    axios.put(`http://localhost:8080/api/equipment/${id}`, editFormData)
+  const handleEquipmentUpdate = (id) => {
+    axios.put(`http://localhost:8080/api/equipment/${id}`, equipmentEditFormData)
       .then(() => {
-        setEditingId(null); // Exit edit mode
+        setEquipmentEditingId(null); // Exit edit mode
         fetchEquipment();   // Refresh list
       })
       .catch(err => console.error(err));
   };
 
   // id - Handles the Table Delete
-  const handleDelete = (id) => {
+  const handleEquipmentDelete = (id) => {
     Swal.fire({
       title: 'Are you sure?',
       text: "This equipment will be permanently deleted!",
@@ -57,50 +59,117 @@ function App() {
         axios.delete(`http://localhost:8080/api/equipment/${id}`)
           .then(() => {
             fetchEquipment();
-          });
+          })
+          .catch(err => Swal.fire('Error', err.response?.data?.message || 'Failed to delete equipment', 'error'));
       }
     });
 
   };
 
-  const FetchReservations = () => {
+  // Fetch reservation data from Spring Boot
+  const fetchReservations = () => {
     axios.get('http://localhost:8080/api/equipment/reservations')
       .then(res => setReservations(res.data))
       .catch(err => console.error(err));
   }
 
   // Initial equipment data fetch
-  useEffect(() => { FetchReservations(); }, []);
+  useEffect(() => { fetchReservations(); }, []);
+
+  // id - Handles the Reservation
+  const handleReservation = (id) => {
+    // Check if the item is in stock before making a reservation
+    const item = equipment.find(e => e.id === id);
+    if (item.quantity <= 0) {
+      Swal.fire("Out of Stock", "There are no units available to reserve.", "error");
+      return; // Prevent reservation if out of stock
+    }
+
+    // Show a SweetAlert2 form to get reservation details
+    Swal.fire({
+      title: `Reserve ${item.name}`,
+      html:
+        '<input id="swal-input1" class="swal2-input" placeholder="Your Name">' +
+        '<input id="swal-input2" class="swal2-input" type="number" placeholder="Number of Days">',
+      focusConfirm: false,
+      showCancelButton: true,
+      confirmButtonText: 'Confirm Reservation',
+      preConfirm: () => {
+        const name = document.getElementById('swal-input1').value;
+        const days = document.getElementById('swal-input2').value;
+        if (!name || !days) {
+          Swal.showValidationMessage('Please enter both name and days');
+        }
+        return { reserverName: name, days: parseInt(days) };
+      }
+    }).then((result) => {
+      if (result.isConfirmed) {
+        const reservationParams = {
+          customer: result.value.reserverName,
+          days: result.value.days
+        };
+        axios.post(`http://localhost:8080/api/equipment/${id}/rent`, null, {params: reservationParams})
+          .then(() => {
+            Swal.fire('Reserved!', 'Your equipment is reserved.', 'success');
+            fetchEquipment(); // Refresh the tables
+            fetchReservations();
+            setReservationFormData({ name: '', days: '' }); // Clear form
+          })
+          .catch(err => Swal.fire('Error', err.response?.data?.message || 'Failed to reserve', 'error'));
+      }
+    });
+  };
+
+  const handleReservationDelete = (id) => {
+    Swal.fire({
+      title: 'Are you sure?',
+      text: "This reservation will be deleted!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef1010',
+      cancelButtonColor: 'rgb(129, 120, 120)',
+      confirmButtonText: 'Yes, delete it!'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        axios.delete(`http://localhost:8080/api/equipment/reservations/${id}`)
+          .then(() => {
+            fetchEquipment();
+            fetchReservations();
+          })
+          .catch(err => Swal.fire('Error', err.response?.data?.message || 'Failed to delete reservation', 'error'));
+      }
+    });
+  };
 
   return (
     <div style={{ padding: '40px', maxWidth: '800px', margin: 'auto', fontFamily: 'system-ui' }}>
       <h1>Equipment Manager</h1>
 
       {/* EQUIPMENT FORM */}
-      <form onSubmit={handleSubmit} style={{ marginBottom: '30px', padding: '20px', background: '#343333', borderRadius: '8px' }}>
+      <form onSubmit={handleEquipmentSubmit} style={{ marginBottom: '30px', padding: '20px', background: '#343333', borderRadius: '8px' }}>
         <h3>Add New Equipment</h3>
         <input
           placeholder="Name"
-          value={formData.name}
-          onChange={e => setFormData({ ...formData, name: e.target.value })}
+          value={equipmentFormData.name}
+          onChange={e => setEquipmentFormData({ ...equipmentFormData, name: e.target.value })}
           required
         />
         <input
           placeholder="Description"
-          value={formData.description}
-          onChange={e => setFormData({ ...formData, description: e.target.value })}
+          value={equipmentFormData.description}
+          onChange={e => setEquipmentFormData({ ...equipmentFormData, description: e.target.value })}
         />
         <input
           type="number"
           placeholder="Quantity"
-          value={formData.quantity}
-          onChange={e => setFormData({ ...formData, quantity: parseInt(e.target.value) })}
+          value={equipmentFormData.quantity}
+          onChange={e => setEquipmentFormData({ ...equipmentFormData, quantity: parseInt(e.target.value) })}
         />
         <input
           type="number"
           placeholder="Price/Day"
-          value={formData.pricePerDay}
-          onChange={e => setFormData({ ...formData, pricePerDay: parseFloat(e.target.value) })}
+          value={equipmentFormData.pricePerDay}
+          onChange={e => setEquipmentFormData({ ...equipmentFormData, pricePerDay: parseFloat(e.target.value) })}
         />
         <button type="submit">Add to Inventory</button>
       </form>
@@ -113,22 +182,22 @@ function App() {
             <th>Description</th>
             <th>Quantity</th>
             <th>Price/Day</th>
-            <th>Modify</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
           {equipment.map(item => (
             <tr key={item.id}>
-              {editingId === item.id ? (
+              {equipmentEditingId === item.id ? (
                 <>
                   {/* EDITING ROW */}
-                  <td><input value={editFormData.name} onChange={e => setEditFormData({ ...editFormData, name: e.target.value })} /></td>
-                  <td><input value={editFormData.description} onChange={e => setEditFormData({ ...editFormData, description: e.target.value })} /></td>
-                  <td><input type="number" value={editFormData.quantity} onChange={e => setEditFormData({ ...editFormData, quantity: parseInt(e.target.value) })} /></td>
-                  <td><input type="number" value={editFormData.pricePerDay} onChange={e => setEditFormData({ ...editFormData, pricePerDay: parseFloat(e.target.value) })} /></td>
+                  <td><input value={equipmentEditFormData.name} onChange={e => setEquipmentEditFormData({ ...equipmentEditFormData, name: e.target.value })} /></td>
+                  <td><input value={equipmentEditFormData.description} onChange={e => setEquipmentEditFormData({ ...equipmentEditFormData, description: e.target.value })} /></td>
+                  <td><input type="number" value={equipmentEditFormData.quantity} onChange={e => setEquipmentEditFormData({ ...equipmentEditFormData, quantity: parseInt(e.target.value) })} /></td>
+                  <td><input type="number" value={equipmentEditFormData.pricePerDay} onChange={e => setEquipmentEditFormData({ ...equipmentEditFormData, pricePerDay: parseFloat(e.target.value) })} /></td>
                   <td>
-                    <button onClick={() => handleUpdate(item.id)}>Save</button>
-                    <button onClick={() => setEditingId(null)}>Cancel</button>
+                    <button onClick={() => handleEquipmentUpdate(item.id)}>Save</button>
+                    <button onClick={() => setEquipmentEditingId(null)}>Cancel</button>
                   </td>
                 </>
               ) : (
@@ -140,10 +209,11 @@ function App() {
                   <td>${item.pricePerDay}</td>
                   <td>
                     <button onClick={() => {
-                      setEditingId(item.id);
-                      setEditFormData(item);
+                      setEquipmentEditingId(item.id);
+                      setEquipmentEditFormData(item);
                     }}>Edit</button>
-                    <button onClick={() => handleDelete(item.id)} style={{ color: 'red' }}>Delete</button>
+                    <button onClick={() => handleEquipmentDelete(item.id)} style={{ color: 'red' }}>Delete</button>
+                    <button onClick={() => handleReservation(item.id)} style={{ color: 'blue' }}>Reserve</button>
                   </td>
                 </>
               )}
@@ -160,16 +230,20 @@ function App() {
             <th>Item</th>
             <th>Start Date</th>
             <th>End Date</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          {reservations.length === 0 ? <tr><td colSpan="3">No reservations found.</td></tr> :
+          {reservations.length === 0 ? <tr><td colSpan="5">No reservations found.</td></tr> :
             reservations.map(item => (
               <tr key={item.id}>
                 <td>{item.customerName}</td>
                 <td>{item.equipment.name}</td>
                 <td>{item.startDate}</td>
                 <td>{item.endDate}</td>
+                <td>
+                  <button onClick={() => handleReservationDelete(item.id)} style={{ color: 'red' }}>Delete</button>
+                </td>
               </tr>
             ))
           }

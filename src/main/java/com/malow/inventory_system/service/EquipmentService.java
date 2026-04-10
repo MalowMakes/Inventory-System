@@ -15,27 +15,27 @@ import java.util.List;
 @Service
 public class EquipmentService {
 
-    /** 
-     * Equipment repository 
-     * */
-    @Autowired 
-    private EquipmentRepository repository;
+    /**
+     * Equipment repository
+     */
+    @Autowired
+    private EquipmentRepository equipmentRepository;
 
     public List<Equipment> getAll() {
-        return repository.findAll();
+        return equipmentRepository.findAll();
     }
 
     public List<Equipment> searchEquipment(String name) {
-        return repository.findByNameContainingIgnoreCase(name);
+        return equipmentRepository.findByNameContainingIgnoreCase(name);
     }
 
     public Equipment getById(Long id) {
-        return repository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Equipment not found with id: " + id));
+        return equipmentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Equipment not found with id: " + id));
     }
 
     public Equipment save(Equipment equipment) {
-        return repository.save(equipment);
+        return equipmentRepository.save(equipment);
     }
 
     public Equipment addEquipment(Equipment item) {
@@ -43,19 +43,19 @@ public class EquipmentService {
         if (item.getPricePerDay() < 0) {
             throw new RuntimeException("Price cannot be negative!");
         }
-        return repository.save(item);
+        return equipmentRepository.save(item);
     }
 
     public void deleteEquipment(Long id) {
-        if (!repository.existsById(id)) {
+        if (!equipmentRepository.existsById(id)) {
             throw new RuntimeException("Cannot delete item: Equipment with ID " + id + " does not exist.");
         }
-        repository.deleteById(id);
+        equipmentRepository.deleteById(id);
     }
 
-    /** 
-     * Reservation repository 
-     * */
+    /**
+     * Reservation repository
+     */
     @Autowired
     private ReservationRepository reservationRepository;
 
@@ -65,8 +65,8 @@ public class EquipmentService {
 
     @Transactional
     public Reservation reserveEquipment(Long equipmentId, String customer, int days) {
-        Equipment item = repository.findById(equipmentId)
-            .orElseThrow(() -> new RuntimeException("Equipment not found"));
+        Equipment item = equipmentRepository.findById(equipmentId)
+                .orElseThrow(() -> new RuntimeException("Equipment not found"));
 
         if (item.getQuantity() < 1) {
             LocalDate availableDate = reservationRepository.findLatestReturnDate(equipmentId);
@@ -75,7 +75,7 @@ public class EquipmentService {
 
         // Reduce stock by 1
         item.setQuantity(item.getQuantity() - 1);
-        repository.save(item);
+        equipmentRepository.save(item);
 
         // Create the reservation record
         Reservation res = new Reservation();
@@ -87,10 +87,17 @@ public class EquipmentService {
         return reservationRepository.save(res);
     }
 
+    @Transactional
     public void deleteReservation(Long id) {
-        if (!reservationRepository.existsById(id)) {
-            throw new RuntimeException("Cannot delete item: Reservation with ID " + id + " does not exist.");
-        }
-        repository.deleteById(id);
+        Reservation res = reservationRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Reservation not found"));
+
+        // Find the associated equipment
+        Equipment equipment = res.getEquipment();
+        // Increase the stock by 1
+        equipment.setQuantity(equipment.getQuantity() + 1);
+        // Save the updated equipment and delete the reservation
+        equipmentRepository.save(equipment);
+        reservationRepository.delete(res);
     }
 }
