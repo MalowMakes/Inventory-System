@@ -68,13 +68,13 @@ public class EquipmentService {
         Equipment item = equipmentRepository.findById(equipmentId)
                 .orElseThrow(() -> new RuntimeException("Equipment not found"));
 
-        if (item.getQuantity() < 1) {
+        if (item.getCurrQuantity() < 1) {
             LocalDate availableDate = reservationRepository.findLatestReturnDate(equipmentId);
             throw new RuntimeException("Item out of stock! Expected available: " + availableDate);
         }
 
         // Reduce stock by 1
-        item.setQuantity(item.getQuantity() - 1);
+        item.setCurrQuantity(item.getCurrQuantity() - 1);
         equipmentRepository.save(item);
 
         // Create the reservation record
@@ -95,7 +95,7 @@ public class EquipmentService {
         // Find the associated equipment
         Equipment equipment = res.getEquipment();
         // Increase the stock by 1
-        equipment.setQuantity(equipment.getQuantity() + 1);
+        equipment.setCurrQuantity(equipment.getCurrQuantity() + 1);
         // Save the updated equipment and delete the reservation
         equipmentRepository.save(equipment);
         reservationRepository.delete(res);

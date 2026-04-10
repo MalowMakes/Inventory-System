@@ -13,6 +13,7 @@ public class Equipment {
 
     private String name;
     private String description;
-    private Integer quantity;
+    private Integer currQuantity;
+    private Integer maxQuantity;
     private Double pricePerDay;
 }

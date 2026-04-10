@@ -4,14 +4,14 @@ import Swal from 'sweetalert2';
 
 function App() {
   const [equipment, setEquipment] = useState([]);
-  const [equipmentFormData, setEquipmentFormData] = useState({ name: '', description: '', quantity: '', pricePerDay: '' });
+  const [equipmentFormData, setEquipmentFormData] = useState({ name: '', description: '', currQuantity: '', maxQuantity: '', pricePerDay: '' });
   const [equipmentEditingId, setEquipmentEditingId] = useState(null);
-  const [equipmentEditFormData, setEquipmentEditFormData] = useState({ name: '', description: '', quantity: '', pricePerDay: '' });
+  const [equipmentEditFormData, setEquipmentEditFormData] = useState({ name: '', description: '', currQuantity: '', maxQuantity: '', pricePerDay: '' });
 
   const [reservations, setReservations] = useState([]);
-  const [reservationFormData, setReservationFormData] = useState({ name: '', description: '', quantity: '', pricePerDay: '' });
-  const [reservationEditingId, setReservationEditingId] = useState(null);
-  const [reservationEditFormData, setReservationEditFormData] = useState({ name: '', description: '', quantity: '', pricePerDay: '' });
+  //const [reservationFormData, setReservationFormData] = useState({ name: '', description: '', quantity: '', pricePerDay: '' });
+  //const [reservationEditingId, setReservationEditingId] = useState(null);
+  //const [reservationEditFormData, setReservationEditFormData] = useState({ name: '', description: '', quantity: '', pricePerDay: '' });
 
   // Fetch equipment data from Spring Boot
   const fetchEquipment = () => {
@@ -29,12 +29,12 @@ function App() {
     axios.post('http://localhost:8080/api/equipment', equipmentFormData)
       .then(() => {
         fetchEquipment(); // Refresh the list after adding
-        setEquipmentFormData({ name: '', description: '', quantity: '', pricePerDay: '' }); // Clear form
+        setEquipmentFormData({ name: '', description: '', currQuantity: '', maxQuantity: '', pricePerDay: '' }); // Clear form
       })
       .catch(err => alert("Error adding item: " + err.response.data.message));
   };
 
-  // id - Handles the Table Update
+  // id - Handles the Equipment Table Update
   const handleEquipmentUpdate = (id) => {
     axios.put(`http://localhost:8080/api/equipment/${id}`, equipmentEditFormData)
       .then(() => {
@@ -44,7 +44,7 @@ function App() {
       .catch(err => console.error(err));
   };
 
-  // id - Handles the Table Delete
+  // id - Handles the EquipmentTable Delete
   const handleEquipmentDelete = (id) => {
     Swal.fire({
       title: 'Are you sure?',
@@ -113,7 +113,6 @@ function App() {
             Swal.fire('Reserved!', 'Your equipment is reserved.', 'success');
             fetchEquipment(); // Refresh the tables
             fetchReservations();
-            setReservationFormData({ name: '', days: '' }); // Clear form
           })
           .catch(err => Swal.fire('Error', err.response?.data?.message || 'Failed to reserve', 'error'));
       }
@@ -143,7 +142,7 @@ function App() {
 
   return (
     <div style={{ padding: '40px', maxWidth: '800px', margin: 'auto', fontFamily: 'system-ui' }}>
-      <h1>Equipment Manager</h1>
+      <h1 style={{ marginBottom: '80px' }}>Equipment Manager</h1>
 
       {/* EQUIPMENT FORM */}
       <form onSubmit={handleEquipmentSubmit} style={{ marginBottom: '30px', padding: '20px', background: '#343333', borderRadius: '8px' }}>
@@ -162,8 +161,10 @@ function App() {
         <input
           type="number"
           placeholder="Quantity"
-          value={equipmentFormData.quantity}
-          onChange={e => setEquipmentFormData({ ...equipmentFormData, quantity: parseInt(e.target.value) })}
+          value={equipmentFormData.currQuantity}
+          onChange={e =>
+            setEquipmentFormData({ ...equipmentFormData, currQuantity: parseInt(e.target.value), maxQuantity: parseInt(e.target.value) })
+          }
         />
         <input
           type="number"
@@ -173,8 +174,8 @@ function App() {
         />
         <button type="submit">Add to Inventory</button>
       </form>
-
       {/* EQUIPMENT TABLE */}
+      <h2 style={{ marginBottom: '20px' }}>Equipment Table</h2>
       <table border="1" width="100%" style={{ borderCollapse: 'collapse', marginBottom: '30px' }}>
         <thead>
           <tr style={{ background: '#333', color: '#fff' }}>
@@ -199,7 +200,7 @@ function App() {
                       {/* EDITING ROW */}
                       <td><input value={equipmentEditFormData.name} onChange={e => setEquipmentEditFormData({ ...equipmentEditFormData, name: e.target.value })} /></td>
                       <td><input value={equipmentEditFormData.description} onChange={e => setEquipmentEditFormData({ ...equipmentEditFormData, description: e.target.value })} /></td>
-                      <td><input type="number" value={equipmentEditFormData.quantity} onChange={e => setEquipmentEditFormData({ ...equipmentEditFormData, quantity: parseInt(e.target.value) })} /></td>
+                      <td><input type="number" value={equipmentEditFormData.maxQuantity} onChange={e => setEquipmentEditFormData({ ...equipmentEditFormData, maxQuantity: parseInt(e.target.value) })} /></td>
                       <td><input type="number" value={equipmentEditFormData.pricePerDay} onChange={e => setEquipmentEditFormData({ ...equipmentEditFormData, pricePerDay: parseFloat(e.target.value) })} /></td>
                       <td>
                         <button onClick={() => handleEquipmentUpdate(item.id)}>Save</button>
@@ -211,7 +212,7 @@ function App() {
                       {/* NORMAL ROW */}
                       <td>{item.name}</td>
                       <td>{item.description}</td>
-                      <td>{item.quantity}</td>
+                      <td>{item.currQuantity} / {item.maxQuantity}</td>
                       <td>${item.pricePerDay}</td>
                       <td>
                         <button onClick={() => {
@@ -230,6 +231,7 @@ function App() {
       </table>
 
       {/* RESERVATION TABLE */}
+      <h2 style={{ marginBottom: '20px' }}>Reservation Table</h2>
       <table border="1" width="100%" style={{ borderCollapse: 'collapse' }}>
         <thead>
           <tr style={{ background: '#333', color: '#fff' }}>
