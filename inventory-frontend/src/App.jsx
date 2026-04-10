@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
+import Swal from 'sweetalert2';
 
 function App() {
   const [equipment, setEquipment] = useState([]);
@@ -8,7 +9,7 @@ function App() {
   const [editingId, setEditingId] = useState(null);
   const [editFormData, setEditFormData] = useState({ name: '', description: '', quantity: '', pricePerDay: '' });
 
-  // 1. Fetch data from Spring Boot
+  // Fetch data from Spring Boot
   const fetchEquipment = () => {
     axios.get('http://localhost:8080/api/equipment')
       .then(res => setEquipment(res.data))
@@ -38,15 +39,26 @@ function App() {
       .catch(err => console.error(err));
   };
 
+  // id - Handles the Table Delete
   const handleDelete = (id) => {
-  if (window.confirm("Are you sure you want to delete this item?")) {
-    axios.delete(`http://localhost:8080/api/equipment/${id}`)
-      .then(() => {
-        fetchEquipment(); 
-      })
-      .catch(err => console.error("Could not delete:", err));
-  }
-};
+    Swal.fire({
+      title: 'Are you sure?',
+      text: "This equipment will be permanently deleted!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef1010',
+      cancelButtonColor: 'rgb(129, 120, 120)',
+      confirmButtonText: 'Yes, delete it!'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        axios.delete(`http://localhost:8080/api/equipment/${id}`)
+          .then(() => {
+            fetchEquipment();
+          });
+      }
+    });
+
+  };
 
   return (
     <div style={{ padding: '40px', maxWidth: '800px', margin: 'auto', fontFamily: 'system-ui' }}>
