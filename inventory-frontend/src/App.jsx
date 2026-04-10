@@ -108,7 +108,7 @@ function App() {
           customer: result.value.reserverName,
           days: result.value.days
         };
-        axios.post(`http://localhost:8080/api/equipment/${id}/rent`, null, {params: reservationParams})
+        axios.post(`http://localhost:8080/api/equipment/${id}/rent`, null, { params: reservationParams })
           .then(() => {
             Swal.fire('Reserved!', 'Your equipment is reserved.', 'success');
             fetchEquipment(); // Refresh the tables
@@ -186,39 +186,46 @@ function App() {
           </tr>
         </thead>
         <tbody>
-          {equipment.map(item => (
-            <tr key={item.id}>
-              {equipmentEditingId === item.id ? (
-                <>
-                  {/* EDITING ROW */}
-                  <td><input value={equipmentEditFormData.name} onChange={e => setEquipmentEditFormData({ ...equipmentEditFormData, name: e.target.value })} /></td>
-                  <td><input value={equipmentEditFormData.description} onChange={e => setEquipmentEditFormData({ ...equipmentEditFormData, description: e.target.value })} /></td>
-                  <td><input type="number" value={equipmentEditFormData.quantity} onChange={e => setEquipmentEditFormData({ ...equipmentEditFormData, quantity: parseInt(e.target.value) })} /></td>
-                  <td><input type="number" value={equipmentEditFormData.pricePerDay} onChange={e => setEquipmentEditFormData({ ...equipmentEditFormData, pricePerDay: parseFloat(e.target.value) })} /></td>
-                  <td>
-                    <button onClick={() => handleEquipmentUpdate(item.id)}>Save</button>
-                    <button onClick={() => setEquipmentEditingId(null)}>Cancel</button>
-                  </td>
-                </>
-              ) : (
-                <>
-                  {/* NORMAL ROW */}
-                  <td>{item.name}</td>
-                  <td>{item.description}</td>
-                  <td>{item.quantity}</td>
-                  <td>${item.pricePerDay}</td>
-                  <td>
-                    <button onClick={() => {
-                      setEquipmentEditingId(item.id);
-                      setEquipmentEditFormData(item);
-                    }}>Edit</button>
-                    <button onClick={() => handleEquipmentDelete(item.id)} style={{ color: 'red' }}>Delete</button>
-                    <button onClick={() => handleReservation(item.id)} style={{ color: 'blue' }}>Reserve</button>
-                  </td>
-                </>
-              )}
-            </tr>
-          ))}
+          {equipment.length === 0 ? (
+            <tr><td colSpan="5">No equipment found.</td></tr>
+          ) : (
+            equipment
+              .slice()
+              .sort((a, b) => a.name.localeCompare(b.name))
+              .map(item => (
+                <tr key={item.id}>
+                  {equipmentEditingId === item.id ? (
+                    <>
+                      {/* EDITING ROW */}
+                      <td><input value={equipmentEditFormData.name} onChange={e => setEquipmentEditFormData({ ...equipmentEditFormData, name: e.target.value })} /></td>
+                      <td><input value={equipmentEditFormData.description} onChange={e => setEquipmentEditFormData({ ...equipmentEditFormData, description: e.target.value })} /></td>
+                      <td><input type="number" value={equipmentEditFormData.quantity} onChange={e => setEquipmentEditFormData({ ...equipmentEditFormData, quantity: parseInt(e.target.value) })} /></td>
+                      <td><input type="number" value={equipmentEditFormData.pricePerDay} onChange={e => setEquipmentEditFormData({ ...equipmentEditFormData, pricePerDay: parseFloat(e.target.value) })} /></td>
+                      <td>
+                        <button onClick={() => handleEquipmentUpdate(item.id)}>Save</button>
+                        <button onClick={() => setEquipmentEditingId(null)}>Cancel</button>
+                      </td>
+                    </>
+                  ) : (
+                    <>
+                      {/* NORMAL ROW */}
+                      <td>{item.name}</td>
+                      <td>{item.description}</td>
+                      <td>{item.quantity}</td>
+                      <td>${item.pricePerDay}</td>
+                      <td>
+                        <button onClick={() => {
+                          setEquipmentEditingId(item.id);
+                          setEquipmentEditFormData(item);
+                        }}>Edit</button>
+                        <button onClick={() => handleEquipmentDelete(item.id)} style={{ color: 'red' }}>Delete</button>
+                        <button onClick={() => handleReservation(item.id)} style={{ color: 'blue' }}>Reserve</button>
+                      </td>
+                    </>
+                  )}
+                </tr>
+              ))
+          )}
         </tbody>
       </table>
 
@@ -234,19 +241,24 @@ function App() {
           </tr>
         </thead>
         <tbody>
-          {reservations.length === 0 ? <tr><td colSpan="5">No reservations found.</td></tr> :
-            reservations.map(item => (
-              <tr key={item.id}>
-                <td>{item.customerName}</td>
-                <td>{item.equipment.name}</td>
-                <td>{item.startDate}</td>
-                <td>{item.endDate}</td>
-                <td>
-                  <button onClick={() => handleReservationDelete(item.id)} style={{ color: 'red' }}>Delete</button>
-                </td>
-              </tr>
-            ))
-          }
+          {reservations.length === 0 ? (
+            <tr><td colSpan="5">No reservations found.</td></tr>
+          ) : (
+            reservations
+              .slice()
+              .sort((a, b) => a.endDate.localeCompare(b.endDate))
+              .map(item => (
+                <tr key={item.id}>
+                  <td>{item.customerName}</td>
+                  <td>{item.equipment.name}</td>
+                  <td>{item.startDate}</td>
+                  <td>{item.endDate}</td>
+                  <td>
+                    <button onClick={() => handleReservationDelete(item.id)} style={{ color: 'red' }}>Delete</button>
+                  </td>
+                </tr>
+              ))
+          )}
         </tbody>
       </table>
     </div>
