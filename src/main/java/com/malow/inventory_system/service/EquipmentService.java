@@ -29,6 +29,15 @@ public class EquipmentService {
         return repository.findByNameContainingIgnoreCase(name);
     }
 
+    public Equipment getById(Long id) {
+        return repository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Equipment not found with id: " + id));
+    }
+
+    public Equipment save(Equipment equipment) {
+        return repository.save(equipment);
+    }
+
     public Equipment addEquipment(Equipment item) {
         // Validation Rule: Prevent negative prices
         if (item.getPricePerDay() < 0) {
