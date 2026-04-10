@@ -9,13 +9,16 @@ function App() {
   const [editingId, setEditingId] = useState(null);
   const [editFormData, setEditFormData] = useState({ name: '', description: '', quantity: '', pricePerDay: '' });
 
-  // Fetch data from Spring Boot
+  const [reservations, setReservations] = useState([]);
+
+  // Fetch equipment data from Spring Boot
   const fetchEquipment = () => {
     axios.get('http://localhost:8080/api/equipment')
       .then(res => setEquipment(res.data))
       .catch(err => console.error(err));
   };
 
+  // Initial equipment data fetch
   useEffect(() => { fetchEquipment(); }, []);
 
   // e - Handles the Form Submission
@@ -60,11 +63,20 @@ function App() {
 
   };
 
+  const FetchReservations = () => {
+    axios.get('http://localhost:8080/api/equipment/reservations')
+      .then(res => setReservations(res.data))
+      .catch(err => console.error(err));
+  }
+
+  // Initial equipment data fetch
+  useEffect(() => { FetchReservations(); }, []);
+
   return (
     <div style={{ padding: '40px', maxWidth: '800px', margin: 'auto', fontFamily: 'system-ui' }}>
       <h1>Equipment Manager</h1>
 
-      {/* Equipment Form */}
+      {/* EQUIPMENT FORM */}
       <form onSubmit={handleSubmit} style={{ marginBottom: '30px', padding: '20px', background: '#343333', borderRadius: '8px' }}>
         <h3>Add New Equipment</h3>
         <input
@@ -93,8 +105,8 @@ function App() {
         <button type="submit">Add to Inventory</button>
       </form>
 
-      {/* DATA TABLE */}
-      <table border="1" width="100%" style={{ borderCollapse: 'collapse' }}>
+      {/* EQUIPMENT TABLE */}
+      <table border="1" width="100%" style={{ borderCollapse: 'collapse', marginBottom: '30px' }}>
         <thead>
           <tr style={{ background: '#333', color: '#fff' }}>
             <th>Name</th>
@@ -137,6 +149,30 @@ function App() {
               )}
             </tr>
           ))}
+        </tbody>
+      </table>
+
+      {/* RESERVATION TABLE */}
+      <table border="1" width="100%" style={{ borderCollapse: 'collapse' }}>
+        <thead>
+          <tr style={{ background: '#333', color: '#fff' }}>
+            <th>User</th>
+            <th>Item</th>
+            <th>Start Date</th>
+            <th>End Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {reservations.length === 0 ? <tr><td colSpan="3">No reservations found.</td></tr> :
+            reservations.map(item => (
+              <tr key={item.id}>
+                <td>{item.customerName}</td>
+                <td>{item.equipment.name}</td>
+                <td>{item.startDate}</td>
+                <td>{item.endDate}</td>
+              </tr>
+            ))
+          }
         </tbody>
       </table>
     </div>
