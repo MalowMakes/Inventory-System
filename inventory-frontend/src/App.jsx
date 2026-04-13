@@ -44,6 +44,15 @@ function App() {
       .catch(err => console.error(err));
   };
 
+   // int - Handles the quanity modification in the Equipment Table Update
+  const modifyEquipmentQuantity = (int) => {
+    setEquipmentEditFormData(prev => ({
+      ...prev,
+      currQuantity: Math.max(0, prev.currQuantity + int), 
+      maxQuantity: Math.max(prev.maxQuantity + int) // Ensure quantity doesn't go negative
+    }));
+  };
+
   // id - Handles the EquipmentTable Delete
   const handleEquipmentDelete = (id) => {
     Swal.fire({
@@ -145,7 +154,7 @@ function App() {
       <h1 style={{ marginBottom: '80px' }}>Equipment Manager</h1>
 
       {/* EQUIPMENT FORM */}
-      <form onSubmit={handleEquipmentSubmit} style={{ marginBottom: '30px', padding: '20px', background: '#343333', borderRadius: '8px' }}>
+      <form onSubmit={handleEquipmentSubmit} style={{ marginBottom: '50px', padding: '20px', background: '#343333', borderRadius: '8px' }}>
         <h3>Add New Equipment</h3>
         <input
           placeholder="Name"
@@ -175,7 +184,7 @@ function App() {
         <button type="submit">Add to Inventory</button>
       </form>
       {/* EQUIPMENT TABLE */}
-      <h2 style={{ marginBottom: '20px' }}>Equipment Table</h2>
+      <h2 style={{ marginBottom: '20px', marginTop: '80px'  }}>Equipment Table</h2>
       <table border="1" width="100%" style={{ borderCollapse: 'collapse', marginBottom: '30px' }}>
         <thead>
           <tr style={{ background: '#333', color: '#fff' }}>
@@ -200,7 +209,10 @@ function App() {
                       {/* EDITING ROW */}
                       <td><input value={equipmentEditFormData.name} onChange={e => setEquipmentEditFormData({ ...equipmentEditFormData, name: e.target.value })} /></td>
                       <td><input value={equipmentEditFormData.description} onChange={e => setEquipmentEditFormData({ ...equipmentEditFormData, description: e.target.value })} /></td>
-                      <td><input type="number" value={equipmentEditFormData.maxQuantity} onChange={e => setEquipmentEditFormData({ ...equipmentEditFormData, maxQuantity: parseInt(e.target.value) })} /></td>
+                      <td>
+                        {equipmentEditFormData.currQuantity} / {equipmentEditFormData.maxQuantity} <br></br>
+                        <button onClick={() => modifyEquipmentQuantity(1)} style={{ color: 'green' }}>+1</button>
+                        <button onClick={() => modifyEquipmentQuantity(-1)} style={{ color: 'red' }}>-1</button></td>
                       <td><input type="number" value={equipmentEditFormData.pricePerDay} onChange={e => setEquipmentEditFormData({ ...equipmentEditFormData, pricePerDay: parseFloat(e.target.value) })} /></td>
                       <td>
                         <button onClick={() => handleEquipmentUpdate(item.id)}>Save</button>
@@ -231,7 +243,7 @@ function App() {
       </table>
 
       {/* RESERVATION TABLE */}
-      <h2 style={{ marginBottom: '20px' }}>Reservation Table</h2>
+      <h2 style={{ marginBottom: '20px', marginTop: '80px' }}>Reservation Table</h2>
       <table border="1" width="100%" style={{ borderCollapse: 'collapse' }}>
         <thead>
           <tr style={{ background: '#333', color: '#fff' }}>
