@@ -22,7 +22,17 @@ public class EquipmentService {
     private EquipmentRepository equipmentRepository;
 
     public List<Equipment> getAll() {
-        return equipmentRepository.findAll();
+        List<Equipment> allEquipment = equipmentRepository.findAll();
+
+        for (Equipment item : allEquipment) {
+            if (item.getCurrQuantity() > 0) {
+                item.setStatus("Available");
+            } else {
+                LocalDate availableDate = reservationRepository.findSoonestReturnDate(item.getId());
+                item.setStatus("Out of stock! Expected availablity: " + availableDate);
+            }
+        }
+        return allEquipment;
     }
 
     public List<Equipment> searchEquipment(String name) {
@@ -53,6 +63,19 @@ public class EquipmentService {
         equipmentRepository.deleteById(id);
     }
 
+    public String getEquipmentStatus (Long id) {
+        Equipment item = equipmentRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Equipment not found with id: " + id));
+            
+        if (item.getCurrQuantity() > 0) {
+                item.setStatus("Available");
+            } else {
+                LocalDate availableDate = reservationRepository.findSoonestReturnDate(item.getId());
+                item.setStatus("Out of stock! Expected availablity: " + availableDate);
+            }
+            return item.getStatus();
+    }
+
     /**
      * Reservation repository
      */
@@ -69,7 +92,7 @@ public class EquipmentService {
                 .orElseThrow(() -> new RuntimeException("Equipment not found"));
 
         if (item.getCurrQuantity() < 1) {
-            LocalDate availableDate = reservationRepository.findLatestReturnDate(equipmentId);
+            LocalDate availableDate = reservationRepository.findSoonestReturnDate(equipmentId);
             throw new RuntimeException("Item out of stock! Expected available: " + availableDate);
         }
 

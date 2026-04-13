@@ -7,11 +7,7 @@ function App() {
   const [equipmentFormData, setEquipmentFormData] = useState({ name: '', description: '', currQuantity: '', maxQuantity: '', pricePerDay: '' });
   const [equipmentEditingId, setEquipmentEditingId] = useState(null);
   const [equipmentEditFormData, setEquipmentEditFormData] = useState({ name: '', description: '', currQuantity: '', maxQuantity: '', pricePerDay: '' });
-
   const [reservations, setReservations] = useState([]);
-  //const [reservationFormData, setReservationFormData] = useState({ name: '', description: '', quantity: '', pricePerDay: '' });
-  //const [reservationEditingId, setReservationEditingId] = useState(null);
-  //const [reservationEditFormData, setReservationEditFormData] = useState({ name: '', description: '', quantity: '', pricePerDay: '' });
 
   // Fetch equipment data from Spring Boot
   const fetchEquipment = () => {
@@ -44,7 +40,7 @@ function App() {
       .catch(err => console.error(err));
   };
 
-   // int - Handles the quanity modification in the Equipment Table Update
+  // int - Handles the quanity modification in the Equipment Table Update
   const modifyEquipmentQuantity = (int) => {
     if (int === -1 && equipmentEditFormData.currQuantity <= 0) {
       Swal.fire("Invalid Operation", "Quantity cannot be negative.", "error");
@@ -52,7 +48,7 @@ function App() {
     }
     setEquipmentEditFormData(prev => ({
       ...prev,
-      currQuantity: Math.max(0, prev.currQuantity + int), 
+      currQuantity: Math.max(0, prev.currQuantity + int),
       maxQuantity: Math.max(prev.maxQuantity + int) // Ensure quantity doesn't go negative
     }));
   };
@@ -188,7 +184,7 @@ function App() {
         <button type="submit">Add to Inventory</button>
       </form>
       {/* EQUIPMENT TABLE */}
-      <h2 style={{ marginBottom: '20px', marginTop: '80px'  }}>Equipment Table</h2>
+      <h2 style={{ marginBottom: '20px', marginTop: '80px' }}>Equipment Table</h2>
       <table border="1" width="100%" style={{ borderCollapse: 'collapse', marginBottom: '30px' }}>
         <thead>
           <tr style={{ background: '#333', color: '#fff' }}>
@@ -219,7 +215,7 @@ function App() {
                         <button onClick={() => modifyEquipmentQuantity(1)} style={{ color: 'green' }}>+1</button>
                         <button onClick={() => modifyEquipmentQuantity(-1)} style={{ color: 'red' }}>-1</button>
                       </td>
-                      <td>Status</td>
+                      <td>{item.status}</td>
                       <td><input type="number" value={equipmentEditFormData.pricePerDay} onChange={e => setEquipmentEditFormData({ ...equipmentEditFormData, pricePerDay: parseFloat(e.target.value) })} /></td>
                       <td>
                         <button onClick={() => handleEquipmentUpdate(item.id)}>Save</button>
@@ -232,7 +228,7 @@ function App() {
                       <td>{item.name}</td>
                       <td>{item.description}</td>
                       <td>{item.currQuantity} / {item.maxQuantity}</td>
-                      <td>Status</td>
+                      <td>{item.status}</td>
                       <td>${item.pricePerDay}</td>
                       <td>
                         <button onClick={() => {

@@ -16,4 +16,7 @@ public class Equipment {
     private Integer currQuantity;
     private Integer maxQuantity;
     private Double pricePerDay;
+
+    @Transient
+    private String status;
 }

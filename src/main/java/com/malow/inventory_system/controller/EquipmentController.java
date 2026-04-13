@@ -43,6 +43,11 @@ public class EquipmentController {
         return service.getAllReservations();
     }
 
+    @GetMapping("/{id}/status") // GET status of equipment by ID
+    public String getEquipmentStatus(@PathVariable Long id) {
+        return service.getEquipmentStatus(id);
+    }
+
     /** 
      * POST
      * */

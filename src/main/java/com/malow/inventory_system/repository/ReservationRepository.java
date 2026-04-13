@@ -11,8 +11,11 @@ import com.malow.inventory_system.model.Reservation;
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
     // Thank you Spring Data JPA for writing the SQL commands
     
-    @Query("SELECT MAX(r.endDate) FROM Reservation r WHERE r.equipment.id = :equipmentId")
-    LocalDate findLatestReturnDate(Long equipmentId);
+    @Query("SELECT MIN(r.endDate) FROM Reservation r " +
+       "WHERE r.equipment.id = :equipmentId " +
+       "AND r.startDate <= CURRENT_DATE " + 
+       "AND r.endDate >= CURRENT_DATE")
+    LocalDate findSoonestReturnDate(Long equipmentId);
 
     List<Reservation> findAllByEndDateBefore(LocalDate date);
 }
