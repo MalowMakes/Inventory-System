@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import Swal from 'sweetalert2';
+import React from 'react';
 
 function App() {
   const [equipment, setEquipment] = useState([]);
-  const [equipmentFormData, setEquipmentFormData] = useState({ name: '', description: '', currQuantity: '', maxQuantity: '', pricePerDay: '' });
+  const [equipmentFormData, setEquipmentFormData] = useState({ name: '', description: '', currQuantity: '', maxQuantity: '', pricePerDay: '' , category: 'Miscellaneous',});
   const [equipmentEditingId, setEquipmentEditingId] = useState(null);
   const [equipmentEditFormData, setEquipmentEditFormData] = useState({ name: '', description: '', currQuantity: '', maxQuantity: '', pricePerDay: '' });
   const [reservations, setReservations] = useState([]);
@@ -19,18 +20,18 @@ function App() {
   // Initial equipment data fetch
   useEffect(() => { fetchEquipment(); }, []);
 
-  // e - Handles the Form Submission
+  // Handles the Form Submission
   const handleEquipmentSubmit = (e) => {
     e.preventDefault();
     axios.post('http://localhost:8080/api/equipment', equipmentFormData)
       .then(() => {
         fetchEquipment(); // Refresh the list after adding
-        setEquipmentFormData({ name: '', description: '', currQuantity: '', maxQuantity: '', pricePerDay: '' }); // Clear form
+        setEquipmentFormData({ name: '', description: '', currQuantity: '', maxQuantity: '', pricePerDay: '', category: 'Miscellaneous' }); // Clear form
       })
       .catch(err => alert("Error adding item: " + err.response.data.message));
   };
 
-  // id - Handles the Equipment Table Update
+  // Handles the Equipment Table Update
   const handleEquipmentUpdate = (id) => {
     axios.put(`http://localhost:8080/api/equipment/${id}`, equipmentEditFormData)
       .then(() => {
@@ -40,7 +41,8 @@ function App() {
       .catch(err => console.error(err));
   };
 
-  // int - Handles the quanity modification in the Equipment Table Update
+
+  // Handles the quanity modification in the Equipment Table Update
   const modifyEquipmentQuantity = (int) => {
     if (int === -1 && equipmentEditFormData.currQuantity <= 0) {
       Swal.fire("Invalid Operation", "Quantity cannot be negative.", "error");
@@ -53,7 +55,7 @@ function App() {
     }));
   };
 
-  // id - Handles the EquipmentTable Delete
+  // Handles the EquipmentTable Delete
   const handleEquipmentDelete = (id) => {
     Swal.fire({
       title: 'Are you sure?',
@@ -85,7 +87,7 @@ function App() {
   // Initial equipment data fetch
   useEffect(() => { fetchReservations(); }, []);
 
-  // id - Handles the Reservation
+  // Handles the Reservation
   const handleReservation = (id) => {
     // Check if the item is in stock before making a reservation
     const item = equipment.find(e => e.id === id);
@@ -149,6 +151,16 @@ function App() {
     });
   };
 
+  const groupedEquipment = (equipment || []).reduce((groups, item) => {
+    // Use "Misc" as a fallback just in case something is null
+    const cat = item.category || "Misc";
+    if (!groups[cat]) groups[cat] = [];
+    groups[cat].push(item);
+    return groups;
+  }, {});
+
+  const categoryKeys = Object.keys(groupedEquipment).sort();
+
   return (
     <div style={{ padding: '40px', maxWidth: '1200px', margin: 'auto', fontFamily: 'system-ui' }}>
       <h1 style={{ marginBottom: '80px' }}>Equipment Manager</h1>
@@ -168,6 +180,11 @@ function App() {
           onChange={e => setEquipmentFormData({ ...equipmentFormData, description: e.target.value })}
         />
         <input
+          placeholder="Category"
+          value={equipmentFormData.category}
+          onChange={e => setEquipmentFormData({ ...equipmentFormData, category: e.target.value })}
+        />
+        <input
           type="number"
           placeholder="Quantity"
           value={equipmentFormData.currQuantity}
@@ -183,6 +200,7 @@ function App() {
         />
         <button type="submit">Add to Inventory</button>
       </form>
+      
       {/* EQUIPMENT TABLE */}
       <h2 style={{ marginBottom: '20px', marginTop: '80px' }}>Equipment Table</h2>
       <table border="1" width="100%" style={{ borderCollapse: 'collapse', marginBottom: '30px' }}>
@@ -198,50 +216,59 @@ function App() {
         </thead>
         <tbody>
           {equipment.length === 0 ? (
-            <tr><td colSpan="5">No equipment found.</td></tr>
+            <tr><td colSpan="6">No equipment found.</td></tr>
           ) : (
-            equipment
-              .slice()
-              .sort((a, b) => a.name.localeCompare(b.name))
-              .map(item => (
-                <tr key={item.id}>
-                  {equipmentEditingId === item.id ? (
-                    <>
-                      {/* EDITING ROW */}
-                      <td><input value={equipmentEditFormData.name} onChange={e => setEquipmentEditFormData({ ...equipmentEditFormData, name: e.target.value })} /></td>
-                      <td><input value={equipmentEditFormData.description} onChange={e => setEquipmentEditFormData({ ...equipmentEditFormData, description: e.target.value })} /></td>
-                      <td>
-                        {equipmentEditFormData.currQuantity} / {equipmentEditFormData.maxQuantity} <br></br>
-                        <button onClick={() => modifyEquipmentQuantity(1)} style={{ color: 'green' }}>+1</button>
-                        <button onClick={() => modifyEquipmentQuantity(-1)} style={{ color: 'red' }}>-1</button>
-                      </td>
-                      <td>{item.status}</td>
-                      <td><input type="number" value={equipmentEditFormData.pricePerDay} onChange={e => setEquipmentEditFormData({ ...equipmentEditFormData, pricePerDay: parseFloat(e.target.value) })} /></td>
-                      <td>
-                        <button onClick={() => handleEquipmentUpdate(item.id)}>Save</button>
-                        <button onClick={() => setEquipmentEditingId(null)}>Cancel</button>
-                      </td>
-                    </>
-                  ) : (
-                    <>
-                      {/* NORMAL ROW */}
-                      <td>{item.name}</td>
-                      <td>{item.description}</td>
-                      <td>{item.currQuantity} / {item.maxQuantity}</td>
-                      <td>{item.status}</td>
-                      <td>${item.pricePerDay}</td>
-                      <td>
-                        <button onClick={() => {
-                          setEquipmentEditingId(item.id);
-                          setEquipmentEditFormData(item);
-                        }}>Edit</button>
-                        <button onClick={() => handleEquipmentDelete(item.id)} style={{ color: 'red' }}>Delete</button>
-                        <button onClick={() => handleReservation(item.id)} style={{ color: 'blue' }}>Reserve</button>
-                      </td>
-                    </>
-                  )}
+            categoryKeys.map((category) => (
+              <React.Fragment key={category}>
+                {/* Category Header Row */}
+                <tr style={{ backgroundColor: '#333', color: '#fff' }}>
+                  <td colSpan="6"><strong>{category.toUpperCase()}</strong></td>
                 </tr>
-              ))
+
+                {/* Items in this category */}
+                {groupedEquipment[category]
+                  .sort((a, b) => (a.name || "").localeCompare(b.name || ""))
+                  .map((item) => (
+                    <tr key={item.id}>
+                      {equipmentEditingId === item.id ? (
+                        <>
+                          {/* EDITING ROW */}
+                          <td><input value={equipmentEditFormData.name} onChange={e => setEquipmentEditFormData({ ...equipmentEditFormData, name: e.target.value })} /></td>
+                          <td><input value={equipmentEditFormData.description} onChange={e => setEquipmentEditFormData({ ...equipmentEditFormData, description: e.target.value })} /></td>
+                          <td>
+                            {equipmentEditFormData.currQuantity} / {equipmentEditFormData.maxQuantity} <br />
+                            <button onClick={() => modifyEquipmentQuantity(1)} style={{ color: 'green' }}>+1</button>
+                            <button onClick={() => modifyEquipmentQuantity(-1)} style={{ color: 'red' }}>-1</button>
+                          </td>
+                          <td>{item.status}</td>
+                          <td><input type="number" value={equipmentEditFormData.pricePerDay} onChange={e => setEquipmentEditFormData({ ...equipmentEditFormData, pricePerDay: parseFloat(e.target.value) })} /></td>
+                          <td>
+                            <button onClick={() => handleEquipmentUpdate(item.id)}>Save</button>
+                            <button onClick={() => setEquipmentEditingId(null)}>Cancel</button>
+                          </td>
+                        </>
+                      ) : (
+                        <>
+                          {/* NORMAL ROW */}
+                          <td>{item.name}</td>
+                          <td>{item.description}</td>
+                          <td>{item.currQuantity} / {item.maxQuantity}</td>
+                          <td>{item.status}</td>
+                          <td>${item.pricePerDay}</td>
+                          <td>
+                            <button onClick={() => {
+                              setEquipmentEditingId(item.id);
+                              setEquipmentEditFormData({ ...item });
+                            }}>Edit</button>
+                            <button onClick={() => handleEquipmentDelete(item.id)} style={{ color: 'red' }}>Delete</button>
+                            <button onClick={() => handleReservation(item.id)} style={{ color: 'blue' }}>Reserve</button>
+                          </td>
+                        </>
+                      )}
+                    </tr>
+                  ))}
+              </React.Fragment>
+            ))
           )}
         </tbody>
       </table>

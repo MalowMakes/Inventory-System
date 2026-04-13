@@ -17,6 +17,9 @@ public class Equipment {
     private Integer maxQuantity;
     private Double pricePerDay;
 
+    @Column(nullable = false)
+    private String category = "Miscellaneous";
+
     @Transient
     private String status;
 }

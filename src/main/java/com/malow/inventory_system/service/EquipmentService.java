@@ -23,7 +23,6 @@ public class EquipmentService {
 
     public List<Equipment> getAll() {
         List<Equipment> allEquipment = equipmentRepository.findAll();
-
         for (Equipment item : allEquipment) {
             if (item.getCurrQuantity() > 0) {
                 item.setStatus("Available");
@@ -66,7 +65,7 @@ public class EquipmentService {
     public String getEquipmentStatus (Long id) {
         Equipment item = equipmentRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Equipment not found with id: " + id));
-            
+
         if (item.getCurrQuantity() > 0) {
                 item.setStatus("Available");
             } else {
