@@ -13,8 +13,8 @@ public class Equipment {
 
     private String name;
     private String description;
-    private Integer currQuantity;
-    private Integer maxQuantity;
+    private int currQuantity;
+    private int maxQuantity;
     private Double pricePerDay;
 
     @Column(nullable = false)

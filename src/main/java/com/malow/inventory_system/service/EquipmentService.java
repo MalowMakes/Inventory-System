@@ -95,6 +95,10 @@ public class EquipmentService {
             throw new RuntimeException("Item out of stock! Expected available: " + availableDate);
         }
 
+        if (days > 7) {
+            throw new RuntimeException("You may only reserve for up to 7 days");
+        }
+
         // Reduce stock by 1
         item.setCurrQuantity(item.getCurrQuantity() - 1);
         equipmentRepository.save(item);

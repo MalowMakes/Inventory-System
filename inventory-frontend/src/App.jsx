@@ -5,9 +5,7 @@ import React from 'react';
 
 function App() {
   const [equipment, setEquipment] = useState([]);
-  const [equipmentFormData, setEquipmentFormData] = useState({ name: '', description: '', currQuantity: '', maxQuantity: '', pricePerDay: '' , category: 'Miscellaneous',});
-  const [equipmentEditingId, setEquipmentEditingId] = useState(null);
-  const [equipmentEditFormData, setEquipmentEditFormData] = useState({ name: '', description: '', currQuantity: '', maxQuantity: '', pricePerDay: '' });
+  const [equipmentFormData, setEquipmentFormData] = useState({ name: '', description: '', currQuantity: '', maxQuantity: '', pricePerDay: '', category: 'Miscellaneous', });
   const [reservations, setReservations] = useState([]);
 
   // Fetch equipment data from Spring Boot
@@ -20,7 +18,17 @@ function App() {
   // Initial equipment data fetch
   useEffect(() => { fetchEquipment(); }, []);
 
-  // Handles the Form Submission
+  // Fetch reservation data from Spring Boot
+  const fetchReservations = () => {
+    axios.get('http://localhost:8080/api/equipment/reservations')
+      .then(res => setReservations(res.data))
+      .catch(err => console.error(err));
+  }
+
+  // Initial reservation data fetch
+  useEffect(() => { fetchReservations(); }, []);
+
+  // Handles the new equipment form submission
   const handleEquipmentSubmit = (e) => {
     e.preventDefault();
     axios.post('http://localhost:8080/api/equipment', equipmentFormData)
@@ -32,28 +40,75 @@ function App() {
   };
 
   // Handles the Equipment Table Update
-  const handleEquipmentUpdate = (id) => {
-    axios.put(`http://localhost:8080/api/equipment/${id}`, equipmentEditFormData)
+  const handleEquipmentUpdate = (id, data) => {
+    axios.put(`http://localhost:8080/api/equipment/${id}`, data)
       .then(() => {
-        setEquipmentEditingId(null); // Exit edit mode
         fetchEquipment();   // Refresh list
+        Swal.fire('Saved!', 'Equipment updated successfully.', 'success');
       })
       .catch(err => console.error(err));
   };
 
+  const equipmentUpdate = (item) => {
+    Swal.fire({
+      title: `Edit ${item.name}`,
+      width: '1200px',
+      html: `
+        <div style="text-align: left; width: 80%; margin: 0 auto;">
+      
+        <div style="margin-bottom: 15px;">
+          <label style="display: block; font-weight: bold; margin-bottom: 5px;">Equipment Name</label>
+          <input id="swal-input1" class="swal2-input" style="width: 100%; margin: 0;" value="${item.name}">
+        </div>
 
-  // Handles the quanity modification in the Equipment Table Update
-  const modifyEquipmentQuantity = (int) => {
-    if (int === -1 && equipmentEditFormData.currQuantity <= 0) {
-      Swal.fire("Invalid Operation", "Quantity cannot be negative.", "error");
-      return; // Prevent decrementing below 0
-    }
-    setEquipmentEditFormData(prev => ({
-      ...prev,
-      currQuantity: Math.max(0, prev.currQuantity + int),
-      maxQuantity: Math.max(prev.maxQuantity + int) // Ensure quantity doesn't go negative
-    }));
-  };
+        <div style="margin-bottom: 15px;">
+          <label style="display: block; font-weight: bold; margin-bottom: 5px;">Category</label>
+          <input id="swal-input2" class="swal2-input" style="width: 100%; margin: 0;" value="${item.category || ''}" placeholder="e.g. Lighting">
+        </div>
+
+        <div style="margin-bottom: 15px;">
+          <label style="display: block; font-weight: bold; margin-bottom: 5px;">Description</label>
+          <input id="swal-input3" class="swal2-input" style="width: 100%; margin: 0;" value="${item.description || ''}">
+        </div>
+
+        <div style="margin-bottom: 15px;">
+          <label style="display: block; font-weight: bold; margin-bottom: 5px;">Maximum Quantity</label>
+          <input id="swal-input4" class="swal2-input" style="width: 100%; margin: 0;" value="${item.maxQuantity || ''}">
+        </div>
+
+        <div style="margin-bottom: 15px;">
+          <label style="display: block; font-weight: bold; margin-bottom: 5px;">Price per Day</label>
+          <input id="swal-input5" class="swal2-input" style="width: 100%; margin: 0;" value="${item.pricePerDay || ''}">
+        </div>
+
+        </div>
+      `,
+      focusConfirm: false,
+      showCancelButton: true,
+      confirmButtonText: 'Apply Changes',
+      preConfirm: () => {
+        const maxQuantity = parseInt(document.getElementById('swal-input4').value);
+        const quantChange = item.maxQuantity - maxQuantity;
+        if (item.currQuantity - quantChange < 0) {
+          Swal.showValidationMessage('New maximum quantity would result in negative current quantity.');
+          return;
+        }
+        return {
+          id: item.id,
+          name: document.getElementById('swal-input1').value,
+          category: document.getElementById('swal-input2').value,
+          description: document.getElementById('swal-input3').value,
+          currQuantity: item.currQuantity - quantChange, // Adjust current quantity based on change to max
+          maxQuantity: maxQuantity,
+          pricePerDay: document.getElementById('swal-input5').value
+        };
+      }
+    }).then((result) => {
+      if (result.isConfirmed) {
+        handleEquipmentUpdate(item.id, result.value);
+      }
+    });
+  }
 
   // Handles the EquipmentTable Delete
   const handleEquipmentDelete = (id) => {
@@ -76,16 +131,6 @@ function App() {
     });
 
   };
-
-  // Fetch reservation data from Spring Boot
-  const fetchReservations = () => {
-    axios.get('http://localhost:8080/api/equipment/reservations')
-      .then(res => setReservations(res.data))
-      .catch(err => console.error(err));
-  }
-
-  // Initial equipment data fetch
-  useEffect(() => { fetchReservations(); }, []);
 
   // Handles the Reservation
   const handleReservation = (id) => {
@@ -110,6 +155,9 @@ function App() {
         const days = document.getElementById('swal-input2').value;
         if (!name || !days) {
           Swal.showValidationMessage('Please enter both name and days');
+        }
+        if (days > 7) {
+          Swal.showValidationMessage('You may only reserve for up to 7 days');
         }
         return { reserverName: name, days: parseInt(days) };
       }
@@ -152,8 +200,7 @@ function App() {
   };
 
   const groupedEquipment = (equipment || []).reduce((groups, item) => {
-    // Use "Misc" as a fallback just in case something is null
-    const cat = item.category || "Misc";
+    const cat = item.category;
     if (!groups[cat]) groups[cat] = [];
     groups[cat].push(item);
     return groups;
@@ -200,7 +247,7 @@ function App() {
         />
         <button type="submit">Add to Inventory</button>
       </form>
-      
+
       {/* EQUIPMENT TABLE */}
       <h2 style={{ marginBottom: '20px', marginTop: '80px' }}>Equipment Table</h2>
       <table border="1" width="100%" style={{ borderCollapse: 'collapse', marginBottom: '30px' }}>
@@ -230,41 +277,20 @@ function App() {
                   .sort((a, b) => (a.name || "").localeCompare(b.name || ""))
                   .map((item) => (
                     <tr key={item.id}>
-                      {equipmentEditingId === item.id ? (
+                      {
                         <>
-                          {/* EDITING ROW */}
-                          <td><input value={equipmentEditFormData.name} onChange={e => setEquipmentEditFormData({ ...equipmentEditFormData, name: e.target.value })} /></td>
-                          <td><input value={equipmentEditFormData.description} onChange={e => setEquipmentEditFormData({ ...equipmentEditFormData, description: e.target.value })} /></td>
-                          <td>
-                            {equipmentEditFormData.currQuantity} / {equipmentEditFormData.maxQuantity} <br />
-                            <button onClick={() => modifyEquipmentQuantity(1)} style={{ color: 'green' }}>+1</button>
-                            <button onClick={() => modifyEquipmentQuantity(-1)} style={{ color: 'red' }}>-1</button>
-                          </td>
-                          <td>{item.status}</td>
-                          <td><input type="number" value={equipmentEditFormData.pricePerDay} onChange={e => setEquipmentEditFormData({ ...equipmentEditFormData, pricePerDay: parseFloat(e.target.value) })} /></td>
-                          <td>
-                            <button onClick={() => handleEquipmentUpdate(item.id)}>Save</button>
-                            <button onClick={() => setEquipmentEditingId(null)}>Cancel</button>
-                          </td>
-                        </>
-                      ) : (
-                        <>
-                          {/* NORMAL ROW */}
                           <td>{item.name}</td>
                           <td>{item.description}</td>
                           <td>{item.currQuantity} / {item.maxQuantity}</td>
                           <td>{item.status}</td>
                           <td>${item.pricePerDay}</td>
                           <td>
-                            <button onClick={() => {
-                              setEquipmentEditingId(item.id);
-                              setEquipmentEditFormData({ ...item });
-                            }}>Edit</button>
+                            <button onClick={() => equipmentUpdate(item)} style={{ color: 'orange' }}>Edit</button>
                             <button onClick={() => handleEquipmentDelete(item.id)} style={{ color: 'red' }}>Delete</button>
-                            <button onClick={() => handleReservation(item.id)} style={{ color: 'blue' }}>Reserve</button>
+                            <button onClick={() => handleReservation(item.id)} style={{ color: 'purple' }}>Reserve</button>
                           </td>
                         </>
-                      )}
+                      }
                     </tr>
                   ))}
               </React.Fragment>

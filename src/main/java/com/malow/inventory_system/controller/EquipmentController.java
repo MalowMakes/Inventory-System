@@ -72,6 +72,7 @@ public class EquipmentController {
         
         existingItem.setName(updatedItem.getName());
         existingItem.setDescription(updatedItem.getDescription());
+        existingItem.setCategory(updatedItem.getCategory());
         existingItem.setCurrQuantity(updatedItem.getCurrQuantity());
         existingItem.setMaxQuantity(updatedItem.getMaxQuantity());
         existingItem.setPricePerDay(updatedItem.getPricePerDay());
