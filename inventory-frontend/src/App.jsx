@@ -46,6 +46,10 @@ function App() {
 
    // int - Handles the quanity modification in the Equipment Table Update
   const modifyEquipmentQuantity = (int) => {
+    if (int === -1 && equipmentEditFormData.currQuantity <= 0) {
+      Swal.fire("Invalid Operation", "Quantity cannot be negative.", "error");
+      return; // Prevent decrementing below 0
+    }
     setEquipmentEditFormData(prev => ({
       ...prev,
       currQuantity: Math.max(0, prev.currQuantity + int), 
@@ -150,7 +154,7 @@ function App() {
   };
 
   return (
-    <div style={{ padding: '40px', maxWidth: '800px', margin: 'auto', fontFamily: 'system-ui' }}>
+    <div style={{ padding: '40px', maxWidth: '1200px', margin: 'auto', fontFamily: 'system-ui' }}>
       <h1 style={{ marginBottom: '80px' }}>Equipment Manager</h1>
 
       {/* EQUIPMENT FORM */}
@@ -191,6 +195,7 @@ function App() {
             <th>Name</th>
             <th>Description</th>
             <th>Quantity</th>
+            <th>Status</th>
             <th>Price/Day</th>
             <th>Actions</th>
           </tr>
@@ -212,7 +217,9 @@ function App() {
                       <td>
                         {equipmentEditFormData.currQuantity} / {equipmentEditFormData.maxQuantity} <br></br>
                         <button onClick={() => modifyEquipmentQuantity(1)} style={{ color: 'green' }}>+1</button>
-                        <button onClick={() => modifyEquipmentQuantity(-1)} style={{ color: 'red' }}>-1</button></td>
+                        <button onClick={() => modifyEquipmentQuantity(-1)} style={{ color: 'red' }}>-1</button>
+                      </td>
+                      <td>Status</td>
                       <td><input type="number" value={equipmentEditFormData.pricePerDay} onChange={e => setEquipmentEditFormData({ ...equipmentEditFormData, pricePerDay: parseFloat(e.target.value) })} /></td>
                       <td>
                         <button onClick={() => handleEquipmentUpdate(item.id)}>Save</button>
@@ -225,6 +232,7 @@ function App() {
                       <td>{item.name}</td>
                       <td>{item.description}</td>
                       <td>{item.currQuantity} / {item.maxQuantity}</td>
+                      <td>Status</td>
                       <td>${item.pricePerDay}</td>
                       <td>
                         <button onClick={() => {
