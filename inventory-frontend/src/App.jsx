@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import './App.css';
 import Swal from 'sweetalert2';
 import React from 'react';
 import api from './api';
@@ -12,6 +12,18 @@ function App() {
   const [reservations, setReservations] = useState([]);
   const [firstName, setFirstName] = useState(localStorage.getItem('firstName') || 'User');
   const role = localStorage.getItem('role');
+
+  const mySwalTheme = {
+    background: '#222324',
+    color: '#ffffff',
+    confirmButtonColor: '#53b890',
+    buttonsStyling: true,
+    customClass: {
+      popup: 'my-swal-popup',
+      confirmButton: 'my-swal-button',
+      validationMessage: 'my-swal-validation'
+    }
+  };
 
   useEffect(() => {
     // Check if a token exists on refresh
@@ -63,13 +75,19 @@ function App() {
     api.put(`/equipment/${id}`, data)
       .then(() => {
         fetchEquipment();   // Refresh list
-        Swal.fire('Saved!', 'Equipment updated successfully.', 'success');
+        Swal.fire({
+          ...mySwalTheme,
+          title: 'Saved!',
+          text: 'Equipment updated successfully.',
+          icon: 'success'
+        });
       })
       .catch(err => console.error(err));
   };
 
   const equipmentUpdate = (item) => {
     Swal.fire({
+      ...mySwalTheme,
       title: `Edit ${item.name}`,
       width: '1200px',
       html: `
@@ -132,6 +150,7 @@ function App() {
   // Handles the EquipmentTable Delete
   const handleEquipmentDelete = (id) => {
     Swal.fire({
+      ...mySwalTheme,
       title: 'Are you sure?',
       text: "This equipment will be permanently deleted!",
       icon: 'warning',
@@ -145,7 +164,12 @@ function App() {
           .then(() => {
             fetchEquipment();
           })
-          .catch(err => Swal.fire('Error', err.response?.data?.message || 'Failed to delete equipment', 'error'));
+          .catch(err => Swal.fire({
+            ...mySwalTheme,
+            title: 'Error',
+            text: err.response?.data?.message || 'Failed to delete equipment',
+            icon: 'error'
+          }));
       }
     });
 
@@ -156,12 +180,18 @@ function App() {
     // Check if the item is in stock before making a reservation
     const item = equipment.find(e => e.id === id);
     if (item.quantity <= 0) {
-      Swal.fire("Out of Stock", "There are no units available to reserve.", "error");
+      Swal.fire({
+        ...mySwalTheme,
+        title: "Out of Stock",
+        text: "There are no units available to reserve.",
+        icon: "error"
+      });
       return; // Prevent reservation if out of stock
     }
 
     // Show a SweetAlert2 form to get reservation details
     Swal.fire({
+      ...mySwalTheme,
       title: `Reserve ${item.name}`,
       html:
         //'<input id="swal-input1" class="swal2-input" placeholder="Your Name">' +
@@ -188,17 +218,28 @@ function App() {
         };
         api.post(`equipment/${id}/rent`, null, { params: reservationParams })
           .then(() => {
-            Swal.fire('Reserved!', 'Your equipment is reserved.', 'success');
+            Swal.fire({
+              ...mySwalTheme,
+              title: 'Reserved!',
+              text: 'Your equipment is reserved.',
+              icon: 'success'
+            });
             fetchEquipment(); // Refresh the tables
             fetchReservations();
           })
-          .catch(err => Swal.fire('Error', err.response?.data?.message || 'Failed to reserve', 'error'));
+          .catch(err => Swal.fire({
+            ...mySwalTheme,
+            title: 'Error',
+            text: err.response?.data?.message || 'Failed to reserve',
+            icon: 'error'
+          }));
       }
     });
   };
 
   const handleReservationDelete = (id) => {
     Swal.fire({
+      ...mySwalTheme,
       title: 'Are you sure?',
       text: "This reservation will be deleted!",
       icon: 'warning',
@@ -213,7 +254,12 @@ function App() {
             fetchEquipment();
             fetchReservations();
           })
-          .catch(err => Swal.fire('Error', err.response?.data?.message || 'Failed to delete reservation', 'error'));
+          .catch(err => Swal.fire({
+            ...mySwalTheme,
+            title: 'Error',
+            text: err.response?.data?.message || 'Failed to delete reservation',
+            icon: 'error'
+          }));
       }
     });
   };
@@ -228,20 +274,75 @@ function App() {
   const categoryKeys = Object.keys(groupedEquipment).sort();
 
   return (
-    <div className="container">
+    <div className="equipment-page-container">
       {!isAuthenticated ? (
-        <Login setAuth={setIsAuthenticated} setFirstName={setFirstName}/>
+        <Login setAuth={setIsAuthenticated} setFirstName={setFirstName} />
       ) : (
         <>
-          <div className="login-header">
-            <h1 style={{ marginBottom: '40px' }}>Welcome, {firstName}!</h1>
-            <button onClick={handleLogout} style={{ fontSize: '24px' }}>Logout</button>
-          </div>
           <div style={{ padding: '40px', maxWidth: '1200px', margin: 'auto', fontFamily: 'system-ui' }}>
-             {role === 'ROLE_ADMIN' && (<div className='form-group'>
-              {/* EQUIPMENT FORM */}
-              <form onSubmit={handleEquipmentSubmit} style={{ marginBottom: '50px', padding: '20px', background: '#343333', borderRadius: '8px' }}>
-                <h2>Add New Equipment</h2>
+            {/* WELCOME MESSAGE */}
+            <div className="login-header">
+              <h1 style={{ marginBottom: '40px' }}>Welcome, {firstName}!</h1>
+              <button className="btn-logout" onClick={handleLogout}>Logout</button>
+            </div>
+
+            {/* EQUIPMENT TABLE */}
+            <h2 className="section-title" style={{ marginTop: '60px' }}>Equipment Table</h2>
+            <table className="modern-table" border="1" width="100%">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Description</th>
+                  <th>Quantity</th>
+                  <th>Status</th>
+                  <th>Price/Day</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {equipment.length === 0 ? (
+                  <tr><td colSpan="6">No equipment found.</td></tr>
+                ) : (
+                  categoryKeys.map((category) => (
+                    <React.Fragment key={category}>
+                      {/* Category Header Row */}
+                      <tr className="category-row">
+                        <td colSpan="6" style={{ color: '#73ffc7', }}>
+                          {category.toUpperCase()}
+                        </td>
+                      </tr>
+
+                      {/* Items in this category */}
+                      {groupedEquipment[category]
+                        .sort((a, b) => (a.name || "").localeCompare(b.name || ""))
+                        .map((item) => (
+                          <tr key={item.id}>
+                            {
+                              <>
+                                <td>{item.name}</td>
+                                <td>{item.description}</td>
+                                <td>{item.currQuantity} / {item.maxQuantity}</td>
+                                <td>{item.status}</td>
+                                <td>${item.pricePerDay}</td>
+                                <td>
+                                  <button className="btn-reserve" onClick={() => handleReservation(item.id)}>Reserve</button>
+                                  {role === 'ROLE_ADMIN' && (<button className="btn-edit" onClick={() => equipmentUpdate(item)}>Edit</button>)}
+                                  {role === 'ROLE_ADMIN' && (<button className="btn-delete" onClick={() => handleEquipmentDelete(item.id)}>Delete</button>)}
+                                </td>
+                              </>
+                            }
+                          </tr>
+                        ))}
+                    </React.Fragment>
+                  ))
+                )}
+              </tbody>
+            </table>
+
+            {/* EQUIPMENT FORM */}
+            {role === 'ROLE_ADMIN' && (<div className="add-equipment-container" style={{ marginTop: '30px' }}>
+              <h2 className="section-title">Add New Equipment</h2>
+              <form className="add-equipment-form" onSubmit={handleEquipmentSubmit}>
                 <input
                   placeholder="Name"
                   value={equipmentFormData.name}
@@ -272,66 +373,17 @@ function App() {
                   value={equipmentFormData.pricePerDay}
                   onChange={e => setEquipmentFormData({ ...equipmentFormData, pricePerDay: parseFloat(e.target.value) })}
                 />
-                <button type="submit">Add to Inventory</button>
+                <div className="add-btn-row">
+                  <button className="add-btn" type="submit">Add to Inventory</button>
+                </div>
               </form>
             </div>)}
 
-            {/* EQUIPMENT TABLE */}
-            <h2 style={{ marginBottom: '20px', marginTop: '20px' }}>Equipment Table</h2>
-            <table border="1" width="100%" style={{ borderCollapse: 'collapse', marginBottom: '30px' }}>
-              <thead>
-                <tr style={{ background: '#333', color: '#fff' }}>
-                  <th>Name</th>
-                  <th>Description</th>
-                  <th>Quantity</th>
-                  <th>Status</th>
-                  <th>Price/Day</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {equipment.length === 0 ? (
-                  <tr><td colSpan="6">No equipment found.</td></tr>
-                ) : (
-                  categoryKeys.map((category) => (
-                    <React.Fragment key={category}>
-                      {/* Category Header Row */}
-                      <tr style={{ backgroundColor: '#333', color: '#fff' }}>
-                        <td colSpan="6"><strong>{category.toUpperCase()}</strong></td>
-                      </tr>
-
-                      {/* Items in this category */}
-                      {groupedEquipment[category]
-                        .sort((a, b) => (a.name || "").localeCompare(b.name || ""))
-                        .map((item) => (
-                          <tr key={item.id}>
-                            {
-                              <>
-                                <td>{item.name}</td>
-                                <td>{item.description}</td>
-                                <td>{item.currQuantity} / {item.maxQuantity}</td>
-                                <td>{item.status}</td>
-                                <td>${item.pricePerDay}</td>
-                                <td>
-                                  {role === 'ROLE_ADMIN' && (<button onClick={() => equipmentUpdate(item)} style={{ color: 'orange' }}>Edit</button>)}
-                                  {role === 'ROLE_ADMIN' && (<button onClick={() => handleEquipmentDelete(item.id)} style={{ color: 'red' }}>Delete</button>)}
-                                  <button onClick={() => handleReservation(item.id)} style={{ color: 'purple' }}>Reserve</button>
-                                </td>
-                              </>
-                            }
-                          </tr>
-                        ))}
-                    </React.Fragment>
-                  ))
-                )}
-              </tbody>
-            </table>
-
             {/* RESERVATION TABLE */}
-            <h2 style={{ marginBottom: '20px', marginTop: '80px' }}>Reservation Table</h2>
-            <table border="1" width="100%" style={{ borderCollapse: 'collapse' }}>
+            <h2 className="section-title" style={{ marginTop: '60px' }}>Reservation Table</h2>
+            <table className="modern-table" border="1" width="100%" style={{ borderCollapse: 'collapse' }}>
               <thead>
-                <tr style={{ background: '#333', color: '#fff' }}>
+                <tr >
                   <th>User</th>
                   <th>Item</th>
                   <th>Start Date</th>
@@ -353,7 +405,7 @@ function App() {
                         <td>{item.startDate}</td>
                         <td>{item.endDate}</td>
                         {role === 'ROLE_ADMIN' && (<td>
-                           <button onClick={() => handleReservationDelete(item.id)} style={{ color: 'red' }}>Delete</button>
+                          <button className="btn-delete" onClick={() => handleReservationDelete(item.id)}>Delete</button>
                         </td>)}
                       </tr>
                     ))

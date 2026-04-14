@@ -52,6 +52,8 @@
 
 body {
   margin: 0;
+  background: radial-gradient(circle at top right, #1e1e2f, #121212);
+  min-height: 100vh;
 }
 
 #root {
