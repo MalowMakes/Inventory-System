@@ -2,15 +2,34 @@ import { useState, useEffect } from 'react'
 import axios from 'axios'
 import Swal from 'sweetalert2';
 import React from 'react';
+import api from './api';
+import Login from './Login';
 
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [equipment, setEquipment] = useState([]);
   const [equipmentFormData, setEquipmentFormData] = useState({ name: '', description: '', currQuantity: '', maxQuantity: '', pricePerDay: '', category: 'Miscellaneous', });
   const [reservations, setReservations] = useState([]);
+  const [firstName, setFirstName] = useState(localStorage.getItem('firstName') || 'User');
+  const role = localStorage.getItem('role');
+
+  useEffect(() => {
+    // Check if a token exists on refresh
+    const token = localStorage.getItem('token');
+    if (token) {
+      setIsAuthenticated(true);
+      setFirstName(localStorage.getItem('firstName'));
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.clear();
+    setIsAuthenticated(false);
+  };
 
   // Fetch equipment data from Spring Boot
   const fetchEquipment = () => {
-    axios.get('http://localhost:8080/api/equipment')
+    api.get('/equipment')
       .then(res => setEquipment(res.data))
       .catch(err => console.error(err));
   };
@@ -20,7 +39,7 @@ function App() {
 
   // Fetch reservation data from Spring Boot
   const fetchReservations = () => {
-    axios.get('http://localhost:8080/api/equipment/reservations')
+    api.get('/equipment/reservations')
       .then(res => setReservations(res.data))
       .catch(err => console.error(err));
   }
@@ -31,7 +50,7 @@ function App() {
   // Handles the new equipment form submission
   const handleEquipmentSubmit = (e) => {
     e.preventDefault();
-    axios.post('http://localhost:8080/api/equipment', equipmentFormData)
+    api.post('/equipment', equipmentFormData)
       .then(() => {
         fetchEquipment(); // Refresh the list after adding
         setEquipmentFormData({ name: '', description: '', currQuantity: '', maxQuantity: '', pricePerDay: '', category: 'Miscellaneous' }); // Clear form
@@ -41,7 +60,7 @@ function App() {
 
   // Handles the Equipment Table Update
   const handleEquipmentUpdate = (id, data) => {
-    axios.put(`http://localhost:8080/api/equipment/${id}`, data)
+    api.put(`/equipment/${id}`, data)
       .then(() => {
         fetchEquipment();   // Refresh list
         Swal.fire('Saved!', 'Equipment updated successfully.', 'success');
@@ -122,7 +141,7 @@ function App() {
       confirmButtonText: 'Yes, delete it!'
     }).then((result) => {
       if (result.isConfirmed) {
-        axios.delete(`http://localhost:8080/api/equipment/${id}`)
+        api.delete(`equipment/${id}`)
           .then(() => {
             fetchEquipment();
           })
@@ -145,13 +164,13 @@ function App() {
     Swal.fire({
       title: `Reserve ${item.name}`,
       html:
-        '<input id="swal-input1" class="swal2-input" placeholder="Your Name">' +
+        //'<input id="swal-input1" class="swal2-input" placeholder="Your Name">' +
         '<input id="swal-input2" class="swal2-input" type="number" placeholder="Number of Days">',
       focusConfirm: false,
       showCancelButton: true,
       confirmButtonText: 'Confirm Reservation',
       preConfirm: () => {
-        const name = document.getElementById('swal-input1').value;
+        const name = firstName
         const days = document.getElementById('swal-input2').value;
         if (!name || !days) {
           Swal.showValidationMessage('Please enter both name and days');
@@ -167,7 +186,7 @@ function App() {
           customer: result.value.reserverName,
           days: result.value.days
         };
-        axios.post(`http://localhost:8080/api/equipment/${id}/rent`, null, { params: reservationParams })
+        api.post(`equipment/${id}/rent`, null, { params: reservationParams })
           .then(() => {
             Swal.fire('Reserved!', 'Your equipment is reserved.', 'success');
             fetchEquipment(); // Refresh the tables
@@ -189,7 +208,7 @@ function App() {
       confirmButtonText: 'Yes, delete it!'
     }).then((result) => {
       if (result.isConfirmed) {
-        axios.delete(`http://localhost:8080/api/equipment/reservations/${id}`)
+        api.delete(`equipment/reservations/${id}`)
           .then(() => {
             fetchEquipment();
             fetchReservations();
@@ -209,131 +228,143 @@ function App() {
   const categoryKeys = Object.keys(groupedEquipment).sort();
 
   return (
-    <div style={{ padding: '40px', maxWidth: '1200px', margin: 'auto', fontFamily: 'system-ui' }}>
-      <h1 style={{ marginBottom: '80px' }}>Equipment Manager</h1>
+    <div className="container">
+      {!isAuthenticated ? (
+        <Login setAuth={setIsAuthenticated} setFirstName={setFirstName}/>
+      ) : (
+        <>
+          <div className="login-header">
+            <h1 style={{ marginBottom: '40px' }}>Welcome, {firstName}!</h1>
+            <button onClick={handleLogout} style={{ fontSize: '24px' }}>Logout</button>
+          </div>
+          <div style={{ padding: '40px', maxWidth: '1200px', margin: 'auto', fontFamily: 'system-ui' }}>
+             {role === 'ROLE_ADMIN' && (<div className='form-group'>
+              {/* EQUIPMENT FORM */}
+              <form onSubmit={handleEquipmentSubmit} style={{ marginBottom: '50px', padding: '20px', background: '#343333', borderRadius: '8px' }}>
+                <h2>Add New Equipment</h2>
+                <input
+                  placeholder="Name"
+                  value={equipmentFormData.name}
+                  onChange={e => setEquipmentFormData({ ...equipmentFormData, name: e.target.value })}
+                  required
+                />
+                <input
+                  placeholder="Description"
+                  value={equipmentFormData.description}
+                  onChange={e => setEquipmentFormData({ ...equipmentFormData, description: e.target.value })}
+                />
+                <input
+                  placeholder="Category"
+                  value={equipmentFormData.category}
+                  onChange={e => setEquipmentFormData({ ...equipmentFormData, category: e.target.value })}
+                />
+                <input
+                  type="number"
+                  placeholder="Quantity"
+                  value={equipmentFormData.currQuantity}
+                  onChange={e =>
+                    setEquipmentFormData({ ...equipmentFormData, currQuantity: parseInt(e.target.value), maxQuantity: parseInt(e.target.value) })
+                  }
+                />
+                <input
+                  type="number"
+                  placeholder="Price/Day"
+                  value={equipmentFormData.pricePerDay}
+                  onChange={e => setEquipmentFormData({ ...equipmentFormData, pricePerDay: parseFloat(e.target.value) })}
+                />
+                <button type="submit">Add to Inventory</button>
+              </form>
+            </div>)}
 
-      {/* EQUIPMENT FORM */}
-      <form onSubmit={handleEquipmentSubmit} style={{ marginBottom: '50px', padding: '20px', background: '#343333', borderRadius: '8px' }}>
-        <h3>Add New Equipment</h3>
-        <input
-          placeholder="Name"
-          value={equipmentFormData.name}
-          onChange={e => setEquipmentFormData({ ...equipmentFormData, name: e.target.value })}
-          required
-        />
-        <input
-          placeholder="Description"
-          value={equipmentFormData.description}
-          onChange={e => setEquipmentFormData({ ...equipmentFormData, description: e.target.value })}
-        />
-        <input
-          placeholder="Category"
-          value={equipmentFormData.category}
-          onChange={e => setEquipmentFormData({ ...equipmentFormData, category: e.target.value })}
-        />
-        <input
-          type="number"
-          placeholder="Quantity"
-          value={equipmentFormData.currQuantity}
-          onChange={e =>
-            setEquipmentFormData({ ...equipmentFormData, currQuantity: parseInt(e.target.value), maxQuantity: parseInt(e.target.value) })
-          }
-        />
-        <input
-          type="number"
-          placeholder="Price/Day"
-          value={equipmentFormData.pricePerDay}
-          onChange={e => setEquipmentFormData({ ...equipmentFormData, pricePerDay: parseFloat(e.target.value) })}
-        />
-        <button type="submit">Add to Inventory</button>
-      </form>
-
-      {/* EQUIPMENT TABLE */}
-      <h2 style={{ marginBottom: '20px', marginTop: '80px' }}>Equipment Table</h2>
-      <table border="1" width="100%" style={{ borderCollapse: 'collapse', marginBottom: '30px' }}>
-        <thead>
-          <tr style={{ background: '#333', color: '#fff' }}>
-            <th>Name</th>
-            <th>Description</th>
-            <th>Quantity</th>
-            <th>Status</th>
-            <th>Price/Day</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {equipment.length === 0 ? (
-            <tr><td colSpan="6">No equipment found.</td></tr>
-          ) : (
-            categoryKeys.map((category) => (
-              <React.Fragment key={category}>
-                {/* Category Header Row */}
-                <tr style={{ backgroundColor: '#333', color: '#fff' }}>
-                  <td colSpan="6"><strong>{category.toUpperCase()}</strong></td>
+            {/* EQUIPMENT TABLE */}
+            <h2 style={{ marginBottom: '20px', marginTop: '20px' }}>Equipment Table</h2>
+            <table border="1" width="100%" style={{ borderCollapse: 'collapse', marginBottom: '30px' }}>
+              <thead>
+                <tr style={{ background: '#333', color: '#fff' }}>
+                  <th>Name</th>
+                  <th>Description</th>
+                  <th>Quantity</th>
+                  <th>Status</th>
+                  <th>Price/Day</th>
+                  <th>Actions</th>
                 </tr>
+              </thead>
+              <tbody>
+                {equipment.length === 0 ? (
+                  <tr><td colSpan="6">No equipment found.</td></tr>
+                ) : (
+                  categoryKeys.map((category) => (
+                    <React.Fragment key={category}>
+                      {/* Category Header Row */}
+                      <tr style={{ backgroundColor: '#333', color: '#fff' }}>
+                        <td colSpan="6"><strong>{category.toUpperCase()}</strong></td>
+                      </tr>
 
-                {/* Items in this category */}
-                {groupedEquipment[category]
-                  .sort((a, b) => (a.name || "").localeCompare(b.name || ""))
-                  .map((item) => (
-                    <tr key={item.id}>
-                      {
-                        <>
-                          <td>{item.name}</td>
-                          <td>{item.description}</td>
-                          <td>{item.currQuantity} / {item.maxQuantity}</td>
-                          <td>{item.status}</td>
-                          <td>${item.pricePerDay}</td>
-                          <td>
-                            <button onClick={() => equipmentUpdate(item)} style={{ color: 'orange' }}>Edit</button>
-                            <button onClick={() => handleEquipmentDelete(item.id)} style={{ color: 'red' }}>Delete</button>
-                            <button onClick={() => handleReservation(item.id)} style={{ color: 'purple' }}>Reserve</button>
-                          </td>
-                        </>
-                      }
-                    </tr>
-                  ))}
-              </React.Fragment>
-            ))
-          )}
-        </tbody>
-      </table>
+                      {/* Items in this category */}
+                      {groupedEquipment[category]
+                        .sort((a, b) => (a.name || "").localeCompare(b.name || ""))
+                        .map((item) => (
+                          <tr key={item.id}>
+                            {
+                              <>
+                                <td>{item.name}</td>
+                                <td>{item.description}</td>
+                                <td>{item.currQuantity} / {item.maxQuantity}</td>
+                                <td>{item.status}</td>
+                                <td>${item.pricePerDay}</td>
+                                <td>
+                                  {role === 'ROLE_ADMIN' && (<button onClick={() => equipmentUpdate(item)} style={{ color: 'orange' }}>Edit</button>)}
+                                  {role === 'ROLE_ADMIN' && (<button onClick={() => handleEquipmentDelete(item.id)} style={{ color: 'red' }}>Delete</button>)}
+                                  <button onClick={() => handleReservation(item.id)} style={{ color: 'purple' }}>Reserve</button>
+                                </td>
+                              </>
+                            }
+                          </tr>
+                        ))}
+                    </React.Fragment>
+                  ))
+                )}
+              </tbody>
+            </table>
 
-      {/* RESERVATION TABLE */}
-      <h2 style={{ marginBottom: '20px', marginTop: '80px' }}>Reservation Table</h2>
-      <table border="1" width="100%" style={{ borderCollapse: 'collapse' }}>
-        <thead>
-          <tr style={{ background: '#333', color: '#fff' }}>
-            <th>User</th>
-            <th>Item</th>
-            <th>Start Date</th>
-            <th>End Date</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {reservations.length === 0 ? (
-            <tr><td colSpan="5">No reservations found.</td></tr>
-          ) : (
-            reservations
-              .slice()
-              .sort((a, b) => a.endDate.localeCompare(b.endDate))
-              .map(item => (
-                <tr key={item.id}>
-                  <td>{item.customerName}</td>
-                  <td>{item.equipment.name}</td>
-                  <td>{item.startDate}</td>
-                  <td>{item.endDate}</td>
-                  <td>
-                    <button onClick={() => handleReservationDelete(item.id)} style={{ color: 'red' }}>Delete</button>
-                  </td>
+            {/* RESERVATION TABLE */}
+            <h2 style={{ marginBottom: '20px', marginTop: '80px' }}>Reservation Table</h2>
+            <table border="1" width="100%" style={{ borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ background: '#333', color: '#fff' }}>
+                  <th>User</th>
+                  <th>Item</th>
+                  <th>Start Date</th>
+                  <th>End Date</th>
+                  {role === 'ROLE_ADMIN' && (<th>Actions</th>)}
                 </tr>
-              ))
-          )}
-        </tbody>
-      </table>
+              </thead>
+              <tbody>
+                {reservations.length === 0 ? (
+                  <tr><td colSpan="5">No reservations found.</td></tr>
+                ) : (
+                  reservations
+                    .slice()
+                    .sort((a, b) => a.endDate.localeCompare(b.endDate))
+                    .map(item => (
+                      <tr key={item.id}>
+                        <td>{item.customerName}</td>
+                        <td>{item.equipment.name}</td>
+                        <td>{item.startDate}</td>
+                        <td>{item.endDate}</td>
+                        {role === 'ROLE_ADMIN' && (<td>
+                           <button onClick={() => handleReservationDelete(item.id)} style={{ color: 'red' }}>Delete</button>
+                        </td>)}
+                      </tr>
+                    ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
     </div>
-  )
+  );
 }
 
 export default App
