@@ -324,98 +324,101 @@ function App() {
                                 <td>{item.currQuantity} / {item.maxQuantity}</td>
                                 <td>{item.status}</td>
                                 <td>${item.pricePerDay}</td>
-                                <td>
+                                <td className="actions-cell">
                                   <button className="btn-reserve" onClick={() => handleReservation(item.id)}>Reserve</button>
+                                  <div className="secondary-actions">
                                   {role === 'ROLE_ADMIN' && (<button className="btn-edit" onClick={() => equipmentUpdate(item)}>Edit</button>)}
                                   {role === 'ROLE_ADMIN' && (<button className="btn-delete" onClick={() => handleEquipmentDelete(item.id)}>Delete</button>)}
-                                </td>
-                              </>
+                                </div>
+                              </td>
+                          </>
                             }
-                          </tr>
-                        ))}
-                    </React.Fragment>
+                    </tr>
+                  ))}
+              </React.Fragment>
+              ))
+                )}
+            </tbody>
+          </table>
+
+          {/* EQUIPMENT FORM */}
+          {role === 'ROLE_ADMIN' && (<div className="add-equipment-container" style={{ marginTop: '30px' }}>
+            <h2 className="section-title">Add New Equipment</h2>
+            <form className="add-equipment-form" onSubmit={handleEquipmentSubmit}>
+              <input
+                placeholder="Name"
+                value={equipmentFormData.name}
+                onChange={e => setEquipmentFormData({ ...equipmentFormData, name: e.target.value })}
+                required
+              />
+              <input
+                placeholder="Description"
+                value={equipmentFormData.description}
+                onChange={e => setEquipmentFormData({ ...equipmentFormData, description: e.target.value })}
+              />
+              <input
+                placeholder="Category"
+                value={equipmentFormData.category}
+                onChange={e => setEquipmentFormData({ ...equipmentFormData, category: e.target.value })}
+              />
+              <input
+                type="number"
+                placeholder="Quantity"
+                value={equipmentFormData.currQuantity}
+                onChange={e =>
+                  setEquipmentFormData({ ...equipmentFormData, currQuantity: parseInt(e.target.value), maxQuantity: parseInt(e.target.value) })
+                }
+              />
+              <input
+                type="number"
+                placeholder="Price/Day"
+                value={equipmentFormData.pricePerDay}
+                onChange={e => setEquipmentFormData({ ...equipmentFormData, pricePerDay: parseFloat(e.target.value) })}
+              />
+              <div className="add-btn-row">
+                <button className="add-btn" type="submit">Add to Inventory</button>
+              </div>
+            </form>
+          </div>)}
+
+          {/* RESERVATION TABLE */}
+          <h2 className="section-title" style={{ marginTop: '60px' }}>Reservation Table</h2>
+          <table className="modern-table" border="1" width="100%" style={{ borderCollapse: 'collapse' }}>
+            <thead>
+              <tr >
+                <th>User</th>
+                <th>Item</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                {role === 'ROLE_ADMIN' && (<th>Actions</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {reservations.length === 0 ? (
+                <tr><td colSpan="5">No reservations found.</td></tr>
+              ) : (
+                reservations
+                  .slice()
+                  .sort((a, b) => a.endDate.localeCompare(b.endDate))
+                  .map(item => (
+                    <tr key={item.id}>
+                      <td>{item.customerName}</td>
+                      <td>{item.equipment.name}</td>
+                      <td>{item.startDate}</td>
+                      <td>{item.endDate}</td>
+                      {role === 'ROLE_ADMIN' && (<td>
+                        <button className="btn-delete" onClick={() => handleReservationDelete(item.id)}>Delete</button>
+                      </td>)}
+                    </tr>
                   ))
-                )}
-              </tbody>
-            </table>
-
-            {/* EQUIPMENT FORM */}
-            {role === 'ROLE_ADMIN' && (<div className="add-equipment-container" style={{ marginTop: '30px' }}>
-              <h2 className="section-title">Add New Equipment</h2>
-              <form className="add-equipment-form" onSubmit={handleEquipmentSubmit}>
-                <input
-                  placeholder="Name"
-                  value={equipmentFormData.name}
-                  onChange={e => setEquipmentFormData({ ...equipmentFormData, name: e.target.value })}
-                  required
-                />
-                <input
-                  placeholder="Description"
-                  value={equipmentFormData.description}
-                  onChange={e => setEquipmentFormData({ ...equipmentFormData, description: e.target.value })}
-                />
-                <input
-                  placeholder="Category"
-                  value={equipmentFormData.category}
-                  onChange={e => setEquipmentFormData({ ...equipmentFormData, category: e.target.value })}
-                />
-                <input
-                  type="number"
-                  placeholder="Quantity"
-                  value={equipmentFormData.currQuantity}
-                  onChange={e =>
-                    setEquipmentFormData({ ...equipmentFormData, currQuantity: parseInt(e.target.value), maxQuantity: parseInt(e.target.value) })
-                  }
-                />
-                <input
-                  type="number"
-                  placeholder="Price/Day"
-                  value={equipmentFormData.pricePerDay}
-                  onChange={e => setEquipmentFormData({ ...equipmentFormData, pricePerDay: parseFloat(e.target.value) })}
-                />
-                <div className="add-btn-row">
-                  <button className="add-btn" type="submit">Add to Inventory</button>
-                </div>
-              </form>
-            </div>)}
-
-            {/* RESERVATION TABLE */}
-            <h2 className="section-title" style={{ marginTop: '60px' }}>Reservation Table</h2>
-            <table className="modern-table" border="1" width="100%" style={{ borderCollapse: 'collapse' }}>
-              <thead>
-                <tr >
-                  <th>User</th>
-                  <th>Item</th>
-                  <th>Start Date</th>
-                  <th>End Date</th>
-                  {role === 'ROLE_ADMIN' && (<th>Actions</th>)}
-                </tr>
-              </thead>
-              <tbody>
-                {reservations.length === 0 ? (
-                  <tr><td colSpan="5">No reservations found.</td></tr>
-                ) : (
-                  reservations
-                    .slice()
-                    .sort((a, b) => a.endDate.localeCompare(b.endDate))
-                    .map(item => (
-                      <tr key={item.id}>
-                        <td>{item.customerName}</td>
-                        <td>{item.equipment.name}</td>
-                        <td>{item.startDate}</td>
-                        <td>{item.endDate}</td>
-                        {role === 'ROLE_ADMIN' && (<td>
-                          <button className="btn-delete" onClick={() => handleReservationDelete(item.id)}>Delete</button>
-                        </td>)}
-                      </tr>
-                    ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </>
-      )}
-    </div>
+              )}
+            </tbody>
+          </table>
+        </div>
+    </>
+  )
+}
+    </div >
   );
 }
 
