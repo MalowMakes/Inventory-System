@@ -75,6 +75,14 @@ const Login = ({ setAuth, setFirstName }) => {
                     <button type="submit" style={{ fontSize: '24px' }}>Sign In</button>
                 </form>
             </div>
+            <div className="login-footer">
+                <p><strong>Demo Access:</strong></p>
+                <div className="demo-creds">
+                    <span>Admin: <code>admin / imtheboss</code></span>
+                    <span>User: <code>user / password321</code></span>
+                    <span>User2: <code>user2 / password321</code></span>
+                </div>
+            </div>
         </div>
     );
 };
