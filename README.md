@@ -52,3 +52,11 @@ INTO
 ```
 spring.sql.init.mode=never
 ```
+
+And if you need to perform a "hard reset" of the database (clearing manual changes and re-running the data.sql script), use the following command:
+
+```
+docker-compose down -v
+docker-compose up --build
+```
+The -v flag ensures that the persistent Docker volumes are removed, allowing the initialization scripts to run on a fresh database instance.
