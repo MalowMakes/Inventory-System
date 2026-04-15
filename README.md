@@ -1,13 +1,18 @@
 # Equipment Management System
+<img width="1920" height="1080" alt="EquipmentManagerThumbnail" src="https://github.com/user-attachments/assets/21fd1099-b11d-440b-bbf2-cd4fe11c33ba" />
+
 ## Project Overview
-This project is a comprehensive full-stack inventory and reservation management system. It is designed to provide a seamless interface for users to browse and reserve equipment while allowing administrators to manage the full lifecycle of inventory items.
-The application is built as a decoupled, RESTful API architecture, ensuring clean separation between the frontend and backend layers.
+This project is a comprehensive full-stack inventory and reservation management system. It is designed to provide a seamless interface for users to browse and reserve equipment while allowing administrators to manage the full lifecycle of inventory items. The application is built as a decoupled, RESTful API architecture, ensuring clean separation between the frontend and backend layers.
 ## Key Technical Features
 - Full-Stack Integration: A modern React frontend paired with a robust Spring Boot backend.
 - Advanced Security: Implements stateless authentication using JSON Web Tokens (JWT).
 - Secure Password Handling: Utilizes BCrypt hashing for all user credentials stored in the PostgreSQL database.
 - State-Aware Interceptors: Custom Axios interceptors manage authentication headers dynamically. This ensures that the application remains secure across page refreshes and that API calls are only attempted once the token is verified and available.
 - Role-Based Access Control (RBAC): The system distinguishes between ROLE_USER and ROLE_ADMIN, with both the UI and the backend API endpoints strictly enforcing these permissions.
+
+## Video Showcase
+> Click the image below to see the application showcase!
+[<img width="800" height="450" src="https://github.com/user-attachments/assets/21fd1099-b11d-440b-bbf2-cd4fe11c33ba" />](https://www.youtube.com/embed/c-lHqu6hdz4)
 
 ## Technical Stack
 - Frontend: React.js, Axios, CSS3
@@ -28,7 +33,7 @@ cd <inventory-system>
 ```
 
 ### 2. Launch the Environment
-The entire stack is containerized for easy setup. Run the following command in the root of the project:
+The entire stack is containerized for easy setup. Run the following command in the root of the project once Docker is running:
 ```
 docker-compose up --build
 ```
