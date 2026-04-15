@@ -12,6 +12,7 @@ This project is a comprehensive full-stack inventory and reservation management 
 
 ## Video Showcase
 > Click the image below to see the application showcase!
+> 
 [<img width="800" height="450" src="https://github.com/user-attachments/assets/21fd1099-b11d-440b-bbf2-cd4fe11c33ba" />](https://www.youtube.com/embed/c-lHqu6hdz4)
 
 ## Technical Stack
