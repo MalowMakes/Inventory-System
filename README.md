@@ -1,4 +1,4 @@
-# Equipment Management System
+# Inventory Management System
 <img width="1920" height="1080" alt="EquipmentManagerThumbnail" src="https://github.com/user-attachments/assets/21fd1099-b11d-440b-bbf2-cd4fe11c33ba" />
 
 ## Project Overview
